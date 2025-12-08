@@ -1,0 +1,1126 @@
+/**
+ * π∞ - The Infinite Pi Challenge
+ * Game Logic with Anti-Cheat Protection
+ * 
+ * Supports:
+ * - 100,000 digits offline (from pi-digits.js)
+ * - Unlimited digits via API when online (pi-digits-manager.js)
+ * - Fallback to hardcoded 10,000 digits if files not loaded
+ */
+
+// Fallback: 10,000 digits of Pi if pi-digits.js not loaded
+const PI_DIGITS_FALLBACK = '1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983817546374649393192550604009277016711390098488240128583616035637076601047101819429555961989467678374494482553797747268471040475346462080466842590694912933136770289891521047521620569660240580381501935112533824300355876402474964732639141992726042699227967823547816360093417216412199245863150302861829745557067498385054945885869269956909272107975093029553211653449872027559602364806654991198818347977535663698074265425278625518184175746728909777727938000816470600161452491921732172147723501414419735685481613611573525521334757418494684385233239073941433345477624168625189835694855620992192221842725502542568876717904946016534668049886272327917860857843838279679766814541009538837863609506800642251252051173929848960841284886269456042419652850222106611863067442786220391949450471237137869609563643719172874677646575739624138908658326459958133904780275900994657640789512694683983525957098258226205224894077267194782684826014769909026401363944374553050682034962524517493996514314298091906592509372216964615157098583874105978859597729754989301617539284681382686838689427741559918559252459539594310499725246808459872736446958486538367362226260991246080512438843904512441365497627807977156914359977001296160894416948685558484063534220722258284886481584560285060168427394522674676788952521385225499546667278239864565961163548862305774564980355936345681743241125150760694794510965960940252288797108931456691368672287489405601015033086179286809208747609178249385890097149096759852613655497818931297848216829989487226588048575640142704775551323796414515237462343645428584447952658678210511413547357395231134271661021359695362314429524849371871101457654035902799344037420073105785390621983874478084784896833214457138687519435064302184531910484810053706146806749192781911979399520614196634287544406437451237181921799983910159195618146751426912397489409071864942319615679452080951465502252316038819301420937621378559566389377870830390697920773467221825625996615014215030680384477345492026054146659252014974428507325186660021324340881907104863317346496514539057962685610055081066587969981635747363840525714591028970641401109712062804390397595156771577004203378699360072305587631763594218731251471205329281918261861258673215791984148488291644706095752706957220917567116722910981690915280173506712748583222871835209353965725121083579151369882091444210067510334671103141267111369908658516398315019701651511685171437657618351556508849099898599823873455283316355076479185358932261854896321329330898570642046752590709154814165498594616371802709819943099244889575712828905923233260972997120844335732654893823911932597463667305836041428138830320382490375898524374417029132765618093773444030707469211201913020330380197621101100449293215160842444859637669838952286847831235526582131449576857262433441893039686426243410773226978028073189154411010446823252716201052652272111660396665573092547110557853763466820653109896526918620564769312570586356620185581007293606598764861179104533488503461136576867532494416680396265797877185560845529654126654085306143444318586769751456614068007002378776591344017127494704205622305389945613140711270004078547332699390814546646458807972708266830634328587856983052358089330657574067954571637752542021149557615814002501262285941302164715509792592309907965473761255176567513575178296664547791745011299614890304639947132962107340437518957359614589019389713111790429782856475032031986915140287080859904801094121472213179476477726224142548545403321571853061422881375850430633217518297986622371721591607716692547487389866549494501146540628433663937900397692656721463853067360965712091807638327166416274888800786925602902284721040317211860820419000422966171196377921337575114959501566049631862947265473642523081770367515906735023507283540567040386743513622224771589150495309844489333096340878076932599397805419341447377441842631298608099888687413260472156951623965864573021631598193195167353812974167729478672422924654366800980676928238280689964004824354037014163149658979409243237896907069779422362508221688957383798623001593776471651228935786015881617557829735233446042815126272037343146531977774160319906655418763979293344195215413418994854234895170298183264162385159';
+
+class PiGame {
+    constructor() {
+        // Game state
+        this.currentDigitIndex = 0;
+        this.mistakes = 0;
+        this.maxMistakes = 3;
+        this.isPlaying = false;
+        this.startTime = null;
+        this.timerInterval = null;
+        this.enteredDigits = [];
+        
+        // Layout state
+        this.currentLayout = localStorage.getItem('piGameLayout') || 'classic';
+        this.revealGridSize = 50; // Number of cells visible in reveal mode
+        
+        // Anti-cheat state
+        this.lastInputTime = 0;
+        this.inputTimings = [];
+        this.mouseMovements = 0;
+        this.touchEvents = 0;
+        this.suspicionScore = 0;
+        this.isTrustedInput = false;
+        this.lastKeySource = null;
+        
+        // Player data (from localStorage)
+        this.lives = this.loadLives();
+        this.playerName = localStorage.getItem('piGameName') || '';
+        this.bestScore = parseInt(localStorage.getItem('piGameBest')) || 0;
+        this.totalAttempts = parseInt(localStorage.getItem('piGameAttempts')) || 0;
+        
+        // Leaderboards
+        this.speedLeaderboard = this.loadLeaderboard('speed');
+        this.enduranceLeaderboard = this.loadLeaderboard('endurance');
+        
+        // Initialize Pi Digits Manager (100k offline + unlimited online)
+        this.initPiDigits();
+        
+        // Initialize
+        this.initElements();
+        this.initEventListeners();
+        this.initLayoutSelector();
+        this.initAntiCheat();
+        this.updateUI();
+    }
+    
+    // ========================================
+    // Pi Digits Management
+    // ========================================
+    
+    initPiDigits() {
+        // Try to use PiDigitsManager (100k offline + API)
+        if (typeof PiDigitsManager !== 'undefined') {
+            window.piDigits = new PiDigitsManager();
+            console.log('✓ PiDigitsManager loaded:', window.piDigits.getTotalAvailable().toLocaleString(), 'digits available');
+        } 
+        // Fallback to PI_OFFLINE_DIGITS if available (100k from pi-digits.js)
+        else if (typeof PI_OFFLINE_DIGITS !== 'undefined') {
+            console.log('✓ Offline Pi digits loaded:', PI_OFFLINE_DIGITS.length.toLocaleString(), 'digits');
+        }
+        // Final fallback to hardcoded 10k
+        else {
+            console.log('⚠ Using fallback Pi digits:', PI_DIGITS_FALLBACK.length.toLocaleString(), 'digits');
+        }
+    }
+    
+    getDigit(index) {
+        // Priority 1: PiDigitsManager (supports 100k offline + unlimited via API)
+        if (window.piDigits) {
+            const digit = window.piDigits.getDigit(index);
+            
+            // Prefetch more digits if we're approaching the limit
+            window.piDigits.prefetchIfNeeded(index);
+            
+            return digit;
+        }
+        
+        // Priority 2: PI_OFFLINE_DIGITS from pi-digits.js (100k)
+        if (typeof PI_OFFLINE_DIGITS !== 'undefined' && index < PI_OFFLINE_DIGITS.length) {
+            return PI_OFFLINE_DIGITS[index];
+        }
+        
+        // Priority 3: Fallback hardcoded digits (10k)
+        if (index < PI_DIGITS_FALLBACK.length) {
+            return PI_DIGITS_FALLBACK[index];
+        }
+        
+        return null;
+    }
+    
+    getTotalDigitsAvailable() {
+        if (window.piDigits) {
+            return window.piDigits.getTotalAvailable();
+        }
+        if (typeof PI_OFFLINE_DIGITS !== 'undefined') {
+            return PI_OFFLINE_DIGITS.length;
+        }
+        return PI_DIGITS_FALLBACK.length;
+    }
+    
+    // ========================================
+    // Initialization
+    // ========================================
+    
+    initElements() {
+        // Screens
+        this.screens = {
+            start: document.getElementById('startScreen'),
+            game: document.getElementById('gameScreen'),
+            gameOver: document.getElementById('gameOverScreen'),
+            leaderboard: document.getElementById('leaderboardScreen')
+        };
+        
+        // Game elements
+        this.elements = {
+            livesCount: document.getElementById('livesCount'),
+            bestDigits: document.getElementById('bestDigits'),
+            totalAttempts: document.getElementById('totalAttempts'),
+            digitCounter: document.getElementById('digitCounter'),
+            timer: document.getElementById('timer'),
+            digitsContainer: document.getElementById('digitsContainer'),
+            currentDigit: document.getElementById('currentDigit'),
+            strikes: [
+                document.getElementById('strike1'),
+                document.getElementById('strike2'),
+                document.getElementById('strike3')
+            ],
+            numpad: document.getElementById('numpad'),
+            
+            // Layout displays
+            layoutClassic: document.getElementById('layoutClassic'),
+            layoutReveal: document.getElementById('layoutReveal'),
+            layoutMinimal: document.getElementById('layoutMinimal'),
+            revealGrid: document.getElementById('revealGrid'),
+            revealDigitNum: document.getElementById('revealDigitNum'),
+            revealCurrentCell: document.getElementById('revealCurrentCell'),
+            minimalEntered: document.getElementById('minimalEntered'),
+            minimalCount: document.getElementById('minimalCount'),
+            
+            // Game over
+            gameOverTitle: document.getElementById('gameOverTitle'),
+            finalDigits: document.getElementById('finalDigits'),
+            finalTime: document.getElementById('finalTime'),
+            achievements: document.getElementById('achievements'),
+            noLivesWarning: document.getElementById('noLivesWarning'),
+            
+            // Leaderboard
+            speedList: document.getElementById('speedList'),
+            enduranceList: document.getElementById('enduranceList'),
+            digitFilter: document.getElementById('digitFilter')
+        };
+        
+        // Modals
+        this.modals = {
+            shop: document.getElementById('shopModal'),
+            name: document.getElementById('nameModal')
+        };
+    }
+    
+    initEventListeners() {
+        // Start button
+        document.getElementById('startBtn').addEventListener('click', () => this.startGame());
+        
+        // Numpad buttons
+        this.elements.numpad.querySelectorAll('.num-btn[data-digit]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.isTrustedInput = e.isTrusted;
+                this.lastKeySource = 'numpad';
+                this.handleDigitInput(btn.dataset.digit);
+            });
+            
+            // Touch events for mobile
+            btn.addEventListener('touchstart', (e) => {
+                this.touchEvents++;
+                this.isTrustedInput = e.isTrusted;
+            }, { passive: true });
+        });
+        
+        // Keyboard input
+        document.addEventListener('keydown', (e) => {
+            if (!this.isPlaying) return;
+            
+            this.isTrustedInput = e.isTrusted;
+            this.lastKeySource = 'keyboard';
+            
+            if (e.key >= '0' && e.key <= '9') {
+                e.preventDefault();
+                this.handleDigitInput(e.key);
+            } else if (e.key === 'Escape') {
+                this.quitGame();
+            }
+        });
+        
+        // Quit and save buttons
+        document.getElementById('quitBtn').addEventListener('click', () => this.quitGame());
+        document.getElementById('saveBtn').addEventListener('click', () => this.saveAndQuit());
+        
+        // Home buttons
+        document.getElementById('homeBtn').addEventListener('click', () => this.goHome());
+        document.getElementById('homeFromGameOver').addEventListener('click', () => this.showScreen('start'));
+        
+        // Game over buttons
+        document.getElementById('retryBtn').addEventListener('click', () => this.retryGame());
+        document.getElementById('leaderboardBtn').addEventListener('click', () => this.showScreen('leaderboard'));
+        document.getElementById('watchAdBtn').addEventListener('click', () => this.watchAd());
+        document.getElementById('buyLivesBtn2').addEventListener('click', () => this.openShop());
+        
+        // Leaderboard
+        document.getElementById('backBtn').addEventListener('click', () => this.showScreen('start'));
+        document.querySelectorAll('.leaderboard-tabs .tab').forEach(tab => {
+            tab.addEventListener('click', () => this.switchLeaderboardTab(tab.dataset.tab));
+        });
+        this.elements.digitFilter.addEventListener('change', () => this.renderSpeedLeaderboard());
+        
+        // Shop
+        document.getElementById('buyLivesBtn').addEventListener('click', () => this.openShop());
+        document.getElementById('closeShop').addEventListener('click', () => this.closeShop());
+        document.querySelectorAll('.shop-item').forEach(item => {
+            item.addEventListener('click', () => this.handleShopPurchase(item));
+        });
+        
+        // Name modal
+        document.getElementById('saveName').addEventListener('click', () => this.saveScore());
+        document.getElementById('skipName').addEventListener('click', () => this.skipSaveScore());
+        
+        // Footer
+        document.getElementById('footerLeaderboard').addEventListener('click', () => this.showScreen('leaderboard'));
+        document.getElementById('footerStats').addEventListener('click', () => this.showStats());
+    }
+    
+    // ========================================
+    // Layout System
+    // ========================================
+    
+    initLayoutSelector() {
+        // Set initial active state
+        document.querySelectorAll('.layout-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.layout === this.currentLayout);
+            btn.addEventListener('click', () => this.setLayout(btn.dataset.layout));
+        });
+    }
+    
+    setLayout(layout) {
+        this.currentLayout = layout;
+        localStorage.setItem('piGameLayout', layout);
+        
+        // Update button states
+        document.querySelectorAll('.layout-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.layout === layout);
+        });
+        
+        // Update active layout display if in game
+        if (this.isPlaying) {
+            this.updateLayoutDisplay();
+        }
+    }
+    
+    updateLayoutDisplay() {
+        // Hide all layouts
+        this.elements.layoutClassic?.classList.remove('active');
+        this.elements.layoutReveal?.classList.remove('active');
+        this.elements.layoutMinimal?.classList.remove('active');
+        
+        // Show current layout
+        switch (this.currentLayout) {
+            case 'reveal':
+                this.elements.layoutReveal?.classList.add('active');
+                break;
+            case 'minimal':
+                this.elements.layoutMinimal?.classList.add('active');
+                break;
+            default:
+                this.elements.layoutClassic?.classList.add('active');
+        }
+    }
+    
+    initRevealGrid() {
+        if (!this.elements.revealGrid) return;
+        
+        // Clear and create grid cells
+        this.elements.revealGrid.innerHTML = '';
+        
+        for (let i = 0; i < this.revealGridSize; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'reveal-cell';
+            cell.dataset.index = i;
+            if (i === 0) cell.classList.add('current');
+            this.elements.revealGrid.appendChild(cell);
+        }
+    }
+    
+    updateRevealGrid(index, digit, isCorrect) {
+        if (!this.elements.revealGrid) return;
+        
+        const cells = this.elements.revealGrid.querySelectorAll('.reveal-cell');
+        
+        // Check if we need to add more cells
+        if (index >= cells.length) {
+            // Add more cells
+            const startIndex = cells.length;
+            for (let i = startIndex; i < index + this.revealGridSize; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'reveal-cell';
+                cell.dataset.index = i;
+                this.elements.revealGrid.appendChild(cell);
+            }
+        }
+        
+        const allCells = this.elements.revealGrid.querySelectorAll('.reveal-cell');
+        
+        // Update current cell
+        allCells.forEach((cell, i) => {
+            cell.classList.remove('current', 'wrong');
+            
+            if (i < index) {
+                // Already revealed
+                cell.classList.add('revealed');
+                cell.textContent = this.enteredDigits[i] || '';
+            } else if (i === index) {
+                if (isCorrect) {
+                    cell.classList.add('revealed');
+                    cell.textContent = digit;
+                } else {
+                    cell.classList.add('wrong');
+                    setTimeout(() => {
+                        cell.classList.remove('wrong');
+                        cell.classList.add('current');
+                    }, 400);
+                }
+            } else if (i === index + 1 && isCorrect) {
+                cell.classList.add('current');
+            }
+        });
+        
+        // Update digit number display
+        if (this.elements.revealDigitNum) {
+            this.elements.revealDigitNum.textContent = index + 1;
+        }
+        
+        // Auto-scroll to show current cell
+        const currentCell = this.elements.revealGrid.querySelector('.current');
+        if (currentCell) {
+            currentCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+    
+    updateMinimalDisplay() {
+        if (!this.elements.minimalEntered) return;
+        
+        // Show last 8 digits entered
+        const lastDigits = this.enteredDigits.slice(-8).join('');
+        this.elements.minimalEntered.textContent = lastDigits;
+        
+        if (this.elements.minimalCount) {
+            this.elements.minimalCount.textContent = this.currentDigitIndex;
+        }
+    }
+    
+    // ========================================
+    // Anti-Cheat System
+    // ========================================
+    
+    initAntiCheat() {
+        // Disable paste
+        document.addEventListener('paste', (e) => {
+            e.preventDefault();
+            this.suspicionScore += 10;
+            console.warn('Paste attempt blocked');
+        });
+        
+        // Disable context menu during game
+        document.addEventListener('contextmenu', (e) => {
+            if (this.isPlaying) {
+                e.preventDefault();
+            }
+        });
+        
+        // Track mouse movements (humans move mouse, bots don't)
+        document.addEventListener('mousemove', () => {
+            this.mouseMovements++;
+        });
+        
+        // Detect automation tools
+        this.detectAutomation();
+        
+        // Block common automation methods
+        this.blockAutomation();
+    }
+    
+    detectAutomation() {
+        // Check for webdriver (Selenium, Puppeteer, etc.)
+        if (navigator.webdriver) {
+            this.suspicionScore += 100;
+            console.warn('WebDriver detected');
+        }
+        
+        // Check for headless browser indicators
+        if (!navigator.languages || navigator.languages.length === 0) {
+            this.suspicionScore += 20;
+        }
+        
+        // Check for phantom.js
+        if (window.callPhantom || window._phantom) {
+            this.suspicionScore += 100;
+        }
+        
+        // Check for nightmare.js
+        if (window.__nightmare) {
+            this.suspicionScore += 100;
+        }
+        
+        // Chrome headless detection
+        if (/HeadlessChrome/.test(navigator.userAgent)) {
+            this.suspicionScore += 100;
+        }
+    }
+    
+    blockAutomation() {
+        // Override dispatchEvent to detect programmatic events
+        const originalDispatchEvent = EventTarget.prototype.dispatchEvent;
+        const self = this;
+        
+        EventTarget.prototype.dispatchEvent = function(event) {
+            if (event.type === 'click' || event.type === 'keydown') {
+                if (!event.isTrusted) {
+                    self.suspicionScore += 5;
+                    console.warn('Synthetic event detected');
+                }
+            }
+            return originalDispatchEvent.call(this, event);
+        };
+    }
+    
+    validateInput() {
+        const now = Date.now();
+        const timeSinceLastInput = now - this.lastInputTime;
+        
+        // Check 1: Input too fast (< 50ms is superhuman)
+        if (this.lastInputTime > 0 && timeSinceLastInput < 50) {
+            this.suspicionScore += 3;
+            console.warn('Input too fast:', timeSinceLastInput + 'ms');
+            return false; // Reject the input
+        }
+        
+        // Check 2: Input source validation
+        if (!this.isTrustedInput) {
+            this.suspicionScore += 10;
+            console.warn('Untrusted input detected');
+            return false;
+        }
+        
+        // Track timing for variance analysis
+        if (this.lastInputTime > 0) {
+            this.inputTimings.push(timeSinceLastInput);
+        }
+        
+        // Check 3: Timing variance (bots are too consistent)
+        if (this.inputTimings.length >= 20) {
+            const variance = this.calculateVariance(this.inputTimings.slice(-20));
+            if (variance < 100) { // Very low variance = likely bot
+                this.suspicionScore += 5;
+                console.warn('Suspicious timing variance:', variance);
+            }
+        }
+        
+        // Check 4: No mouse/touch activity (possible bot)
+        if (this.currentDigitIndex > 50 && this.mouseMovements < 10 && this.touchEvents < 10) {
+            this.suspicionScore += 2;
+        }
+        
+        this.lastInputTime = now;
+        return true;
+    }
+    
+    calculateVariance(arr) {
+        const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+        const squareDiffs = arr.map(value => Math.pow(value - mean, 2));
+        return squareDiffs.reduce((a, b) => a + b, 0) / arr.length;
+    }
+    
+    isSuspicious() {
+        return this.suspicionScore >= 50;
+    }
+    
+    getAntiCheatData() {
+        return {
+            suspicionScore: this.suspicionScore,
+            avgInputTime: this.inputTimings.length > 0 
+                ? this.inputTimings.reduce((a, b) => a + b, 0) / this.inputTimings.length 
+                : 0,
+            inputVariance: this.inputTimings.length >= 10 
+                ? this.calculateVariance(this.inputTimings) 
+                : null,
+            mouseMovements: this.mouseMovements,
+            touchEvents: this.touchEvents,
+            inputCount: this.inputTimings.length
+        };
+    }
+    
+    // ========================================
+    // Game Logic
+    // ========================================
+    
+    startGame() {
+        if (this.lives <= 0) {
+            this.openShop();
+            return;
+        }
+        
+        // Deduct life
+        this.lives--;
+        this.saveLives();
+        
+        // Reset game state
+        this.currentDigitIndex = 0;
+        this.mistakes = 0;
+        this.enteredDigits = [];
+        this.isPlaying = true;
+        
+        // Reset anti-cheat
+        this.lastInputTime = 0;
+        this.inputTimings = [];
+        this.mouseMovements = 0;
+        this.touchEvents = 0;
+        this.suspicionScore = 0;
+        
+        // Update attempts
+        this.totalAttempts++;
+        localStorage.setItem('piGameAttempts', this.totalAttempts);
+        
+        // Reset UI
+        this.elements.digitsContainer.innerHTML = '<span class="cursor blink"></span>';
+        this.elements.currentDigit.textContent = '?';
+        this.elements.strikes.forEach(s => {
+            s.textContent = '○';
+            s.classList.remove('active');
+        });
+        
+        // Initialize layout
+        this.updateLayoutDisplay();
+        this.initRevealGrid();
+        if (this.elements.minimalEntered) {
+            this.elements.minimalEntered.textContent = '';
+        }
+        if (this.elements.minimalCount) {
+            this.elements.minimalCount.textContent = '0';
+        }
+        if (this.elements.revealCurrentCell) {
+            this.elements.revealCurrentCell.textContent = '?';
+        }
+        
+        // Start timer
+        this.startTime = Date.now();
+        this.timerInterval = setInterval(() => this.updateTimer(), 100);
+        
+        // Show game screen
+        this.showScreen('game');
+        this.updateUI();
+    }
+    
+    handleDigitInput(digit) {
+        if (!this.isPlaying) return;
+        
+        // Anti-cheat validation
+        if (!this.validateInput()) {
+            // Add visual feedback for rejected input
+            this.elements.numpad.classList.add('flash-wrong');
+            setTimeout(() => this.elements.numpad.classList.remove('flash-wrong'), 300);
+            return;
+        }
+        
+        const expectedDigit = this.getDigit(this.currentDigitIndex);
+        
+        if (digit === expectedDigit) {
+            // Correct!
+            this.handleCorrectDigit(digit);
+        } else {
+            // Wrong!
+            this.handleWrongDigit(digit, expectedDigit);
+        }
+    }
+    
+    handleCorrectDigit(digit) {
+        // Update state first
+        this.enteredDigits.push(digit);
+        const prevIndex = this.currentDigitIndex;
+        this.currentDigitIndex++;
+        
+        // Update counter
+        this.elements.digitCounter.textContent = this.currentDigitIndex;
+        
+        // Update based on current layout
+        switch (this.currentLayout) {
+            case 'reveal':
+                this.updateRevealGrid(prevIndex, digit, true);
+                if (this.elements.revealCurrentCell) {
+                    this.elements.revealCurrentCell.textContent = '?';
+                }
+                break;
+                
+            case 'minimal':
+                this.updateMinimalDisplay();
+                break;
+                
+            default: // classic
+                // Add digit to display
+                const cursor = this.elements.digitsContainer.querySelector('.cursor');
+                const digitSpan = document.createElement('span');
+                digitSpan.className = 'digit correct new';
+                digitSpan.textContent = digit;
+                this.elements.digitsContainer.insertBefore(digitSpan, cursor);
+                
+                // Remove animation class after it plays
+                setTimeout(() => digitSpan.classList.remove('new'), 300);
+                
+                // Visual feedback
+                this.elements.digitsContainer.classList.add('flash-correct');
+                setTimeout(() => this.elements.digitsContainer.classList.remove('flash-correct'), 300);
+                
+                // Auto-scroll to bottom
+                this.elements.digitsContainer.scrollTop = this.elements.digitsContainer.scrollHeight;
+        }
+        
+        // Check milestones
+        this.checkMilestone();
+    }
+    
+    handleWrongDigit(digit, expected) {
+        this.mistakes++;
+        
+        // Update strikes
+        this.elements.strikes[this.mistakes - 1].textContent = '●';
+        this.elements.strikes[this.mistakes - 1].classList.add('active');
+        
+        // Update based on current layout
+        switch (this.currentLayout) {
+            case 'reveal':
+                this.updateRevealGrid(this.currentDigitIndex, digit, false);
+                if (this.elements.revealCurrentCell) {
+                    this.elements.revealCurrentCell.textContent = expected;
+                    this.elements.revealCurrentCell.style.color = 'var(--error)';
+                    setTimeout(() => {
+                        this.elements.revealCurrentCell.textContent = '?';
+                        this.elements.revealCurrentCell.style.color = '';
+                    }, 1000);
+                }
+                break;
+                
+            case 'minimal':
+                // Flash the display
+                if (this.elements.minimalEntered) {
+                    this.elements.minimalEntered.style.color = 'var(--error)';
+                    setTimeout(() => {
+                        this.elements.minimalEntered.style.color = '';
+                    }, 300);
+                }
+                break;
+                
+            default: // classic
+                // Show wrong digit briefly
+                const cursor = this.elements.digitsContainer.querySelector('.cursor');
+                const digitSpan = document.createElement('span');
+                digitSpan.className = 'digit wrong';
+                digitSpan.textContent = digit;
+                this.elements.digitsContainer.insertBefore(digitSpan, cursor);
+                
+                // Show correct digit hint
+                this.elements.currentDigit.textContent = expected;
+                setTimeout(() => {
+                    this.elements.currentDigit.textContent = '?';
+                }, 1000);
+                
+                // Visual feedback
+                this.elements.digitsContainer.classList.add('flash-wrong');
+                setTimeout(() => {
+                    this.elements.digitsContainer.classList.remove('flash-wrong');
+                    // Remove wrong digit
+                    digitSpan.remove();
+                }, 300);
+        }
+        
+        // Check game over
+        if (this.mistakes >= this.maxMistakes) {
+            this.endGame(false);
+        }
+    }
+    
+    checkMilestone() {
+        const milestones = [10, 20, 50, 100, 200, 500, 1000];
+        if (milestones.includes(this.currentDigitIndex)) {
+            // Record speed for this milestone
+            const time = (Date.now() - this.startTime) / 1000;
+            this.recordSpeedScore(this.currentDigitIndex, time);
+        }
+    }
+    
+    updateTimer() {
+        if (!this.isPlaying) return;
+        const elapsed = (Date.now() - this.startTime) / 1000;
+        this.elements.timer.textContent = elapsed.toFixed(2) + 's';
+    }
+    
+    endGame(voluntary = false) {
+        this.isPlaying = false;
+        clearInterval(this.timerInterval);
+        
+        const finalTime = (Date.now() - this.startTime) / 1000;
+        const finalDigits = this.currentDigitIndex;
+        
+        // Check for new best
+        const isNewBest = finalDigits > this.bestScore;
+        if (isNewBest) {
+            this.bestScore = finalDigits;
+            localStorage.setItem('piGameBest', this.bestScore);
+        }
+        
+        // Update game over screen
+        this.elements.finalDigits.textContent = finalDigits;
+        this.elements.finalTime.textContent = finalTime.toFixed(2) + 's';
+        
+        if (isNewBest && finalDigits > 0) {
+            this.elements.gameOverTitle.textContent = '🎉 New Personal Best!';
+            this.elements.gameOverTitle.classList.add('new-record');
+        } else {
+            this.elements.gameOverTitle.textContent = voluntary ? 'Progress Saved' : 'Game Over';
+            this.elements.gameOverTitle.classList.remove('new-record');
+        }
+        
+        // Show achievements
+        this.showAchievements(finalDigits, finalTime);
+        
+        // Update lives warning
+        if (this.lives <= 0) {
+            this.elements.noLivesWarning.classList.add('visible');
+            document.getElementById('retryBtn').style.display = 'none';
+        } else {
+            this.elements.noLivesWarning.classList.remove('visible');
+            document.getElementById('retryBtn').style.display = 'block';
+        }
+        
+        // Check if score is leaderboard-worthy
+        this.pendingScore = {
+            digits: finalDigits,
+            time: finalTime,
+            antiCheat: this.getAntiCheatData()
+        };
+        
+        // Show game over screen, then prompt for name if good score
+        this.showScreen('gameOver');
+        
+        if (finalDigits >= 10 && !this.isSuspicious()) {
+            setTimeout(() => this.promptForName(), 500);
+        }
+        
+        this.updateUI();
+    }
+    
+    showAchievements(digits, time) {
+        const achievements = [];
+        
+        if (digits >= 10) achievements.push('🔟 Double Digits');
+        if (digits >= 50) achievements.push('🌟 Half Century');
+        if (digits >= 100) achievements.push('💯 Century Club');
+        if (digits >= 314) achievements.push('🥧 Pi Master');
+        if (digits >= 1000) achievements.push('🚀 Thousand Club');
+        
+        if (digits >= 10 && time / digits < 0.5) achievements.push('⚡ Speed Demon');
+        if (this.mistakes === 0 && digits >= 20) achievements.push('✨ Flawless');
+        
+        this.elements.achievements.innerHTML = achievements
+            .map(a => `<span class="achievement">${a}</span>`)
+            .join('');
+    }
+    
+    quitGame() {
+        if (confirm('Quit current game? Your progress will be lost.')) {
+            this.endGame(true);
+        }
+    }
+    
+    saveAndQuit() {
+        this.endGame(true);
+    }
+    
+    goHome() {
+        if (this.isPlaying) {
+            if (confirm('Go back to home? Your current progress will be lost.')) {
+                this.isPlaying = false;
+                clearInterval(this.timerInterval);
+                this.showScreen('start');
+            }
+        } else {
+            this.showScreen('start');
+        }
+    }
+    
+    retryGame() {
+        this.startGame();
+    }
+    
+    // ========================================
+    // Leaderboard System
+    // ========================================
+    
+    promptForName() {
+        const nameInput = document.getElementById('playerName');
+        nameInput.value = this.playerName;
+        this.modals.name.classList.add('active');
+        nameInput.focus();
+    }
+    
+    saveScore() {
+        const nameInput = document.getElementById('playerName');
+        const name = nameInput.value.trim() || 'Anonymous';
+        
+        this.playerName = name;
+        localStorage.setItem('piGameName', name);
+        
+        if (this.pendingScore && !this.isSuspicious()) {
+            // Save to endurance leaderboard
+            this.addToEnduranceLeaderboard({
+                name,
+                digits: this.pendingScore.digits,
+                time: this.pendingScore.time,
+                date: new Date().toISOString()
+            });
+        }
+        
+        this.modals.name.classList.remove('active');
+    }
+    
+    skipSaveScore() {
+        this.modals.name.classList.remove('active');
+    }
+    
+    recordSpeedScore(digits, time) {
+        if (this.isSuspicious()) return;
+        
+        const name = this.playerName || 'Anonymous';
+        const key = `speed_${digits}`;
+        
+        let records = this.speedLeaderboard[key] || [];
+        
+        // Check if this is a better time
+        const existingIndex = records.findIndex(r => r.name === name);
+        if (existingIndex >= 0) {
+            if (records[existingIndex].time > time) {
+                records[existingIndex].time = time;
+                records[existingIndex].date = new Date().toISOString();
+            }
+        } else {
+            records.push({
+                name,
+                time,
+                date: new Date().toISOString()
+            });
+        }
+        
+        // Sort by time and keep top 100
+        records.sort((a, b) => a.time - b.time);
+        records = records.slice(0, 100);
+        
+        this.speedLeaderboard[key] = records;
+        this.saveLeaderboard('speed', this.speedLeaderboard);
+    }
+    
+    addToEnduranceLeaderboard(entry) {
+        // Check if player already has a better score
+        const existingIndex = this.enduranceLeaderboard.findIndex(r => r.name === entry.name);
+        
+        if (existingIndex >= 0) {
+            if (this.enduranceLeaderboard[existingIndex].digits < entry.digits) {
+                this.enduranceLeaderboard[existingIndex] = entry;
+            }
+        } else {
+            this.enduranceLeaderboard.push(entry);
+        }
+        
+        // Sort by digits and keep top 100
+        this.enduranceLeaderboard.sort((a, b) => b.digits - a.digits);
+        this.enduranceLeaderboard = this.enduranceLeaderboard.slice(0, 100);
+        
+        this.saveLeaderboard('endurance', this.enduranceLeaderboard);
+    }
+    
+    loadLeaderboard(type) {
+        try {
+            const data = localStorage.getItem(`piGame_${type}Leaderboard`);
+            return data ? JSON.parse(data) : (type === 'speed' ? {} : []);
+        } catch {
+            return type === 'speed' ? {} : [];
+        }
+    }
+    
+    saveLeaderboard(type, data) {
+        localStorage.setItem(`piGame_${type}Leaderboard`, JSON.stringify(data));
+    }
+    
+    switchLeaderboardTab(tab) {
+        document.querySelectorAll('.leaderboard-tabs .tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === tab);
+        });
+        
+        document.getElementById('speedLeaderboard').classList.toggle('active', tab === 'speed');
+        document.getElementById('enduranceLeaderboard').classList.toggle('active', tab === 'endurance');
+        
+        if (tab === 'speed') {
+            this.renderSpeedLeaderboard();
+        } else {
+            this.renderEnduranceLeaderboard();
+        }
+    }
+    
+    renderSpeedLeaderboard() {
+        const digits = this.elements.digitFilter.value;
+        const key = `speed_${digits}`;
+        const records = this.speedLeaderboard[key] || [];
+        
+        if (records.length === 0) {
+            this.elements.speedList.innerHTML = `
+                <div class="empty-leaderboard">
+                    <p>No records yet for ${digits} digits!</p>
+                    <p>Be the first to set a time.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        this.elements.speedList.innerHTML = records.map((record, index) => {
+            const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
+            const isYou = record.name === this.playerName;
+            
+            return `
+                <div class="leaderboard-entry ${isYou ? 'highlight' : ''}">
+                    <span class="entry-rank ${rankClass}">${index + 1}</span>
+                    <div class="entry-info">
+                        <span class="entry-name">${this.escapeHtml(record.name)}${isYou ? ' (You)' : ''}</span>
+                        <span class="entry-date">${this.formatDate(record.date)}</span>
+                    </div>
+                    <div class="entry-time">${record.time.toFixed(2)}s</div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    renderEnduranceLeaderboard() {
+        if (this.enduranceLeaderboard.length === 0) {
+            this.elements.enduranceList.innerHTML = `
+                <div class="empty-leaderboard">
+                    <p>No records yet!</p>
+                    <p>Start memorizing π to claim the top spot.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        this.elements.enduranceList.innerHTML = this.enduranceLeaderboard.map((record, index) => {
+            const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
+            const isYou = record.name === this.playerName;
+            
+            return `
+                <div class="leaderboard-entry ${isYou ? 'highlight' : ''}">
+                    <span class="entry-rank ${rankClass}">${index + 1}</span>
+                    <div class="entry-info">
+                        <span class="entry-name">${this.escapeHtml(record.name)}${isYou ? ' (You)' : ''}</span>
+                        <span class="entry-date">${this.formatDate(record.date)}</span>
+                    </div>
+                    <div class="entry-score">${record.digits} digits</div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    // ========================================
+    // Lives & Shop System
+    // ========================================
+    
+    loadLives() {
+        const savedLives = localStorage.getItem('piGameLives');
+        const lastRegenTime = localStorage.getItem('piGameLastRegen');
+        
+        let lives = savedLives !== null ? parseInt(savedLives) : 5;
+        
+        // Regenerate lives (1 per hour, max 5)
+        if (lastRegenTime) {
+            const hoursPassed = (Date.now() - parseInt(lastRegenTime)) / (1000 * 60 * 60);
+            const livesToAdd = Math.floor(hoursPassed);
+            if (livesToAdd > 0 && lives < 5) {
+                lives = Math.min(5, lives + livesToAdd);
+                localStorage.setItem('piGameLastRegen', Date.now());
+            }
+        } else {
+            localStorage.setItem('piGameLastRegen', Date.now());
+        }
+        
+        return lives;
+    }
+    
+    saveLives() {
+        localStorage.setItem('piGameLives', this.lives);
+        localStorage.setItem('piGameLastRegen', Date.now());
+    }
+    
+    addLives(amount) {
+        this.lives += amount;
+        this.saveLives();
+        this.updateUI();
+    }
+    
+    openShop() {
+        this.modals.shop.classList.add('active');
+    }
+    
+    closeShop() {
+        this.modals.shop.classList.remove('active');
+    }
+    
+    handleShopPurchase(item) {
+        const lives = item.dataset.lives;
+        const action = item.dataset.action;
+        const price = item.dataset.price;
+        
+        if (action === 'ad') {
+            this.watchAd();
+        } else if (lives === 'unlimited') {
+            // Premium subscription - would integrate with payment provider
+            alert('Premium subscription coming soon! This would connect to Stripe or app store billing.');
+        } else {
+            // One-time purchase - would integrate with payment provider
+            alert(`Purchase ${lives} lives for $${price}\n\nThis would connect to Stripe or app store billing.`);
+            // For demo, give the lives
+            // this.addLives(parseInt(lives));
+        }
+        
+        this.closeShop();
+    }
+    
+    watchAd() {
+        // Simulate watching an ad
+        alert('📺 Watching ad...\n\nIn production, this would show a real ad from AdMob, Unity Ads, or similar.');
+        
+        // Give life after "watching"
+        setTimeout(() => {
+            this.addLives(1);
+            alert('You earned +1 life! ❤️');
+        }, 500);
+    }
+    
+    // ========================================
+    // UI Helpers
+    // ========================================
+    
+    showScreen(screenName) {
+        Object.values(this.screens).forEach(screen => {
+            screen.classList.remove('active');
+        });
+        this.screens[screenName].classList.add('active');
+        
+        // Render leaderboards when showing that screen
+        if (screenName === 'leaderboard') {
+            this.renderSpeedLeaderboard();
+            this.renderEnduranceLeaderboard();
+        }
+    }
+    
+    updateUI() {
+        this.elements.livesCount.textContent = this.lives;
+        this.elements.bestDigits.textContent = this.bestScore;
+        this.elements.totalAttempts.textContent = this.totalAttempts;
+    }
+    
+    showStats() {
+        const antiCheat = this.getAntiCheatData();
+        alert(
+            `📊 Your Stats\n\n` +
+            `Best Score: ${this.bestScore} digits\n` +
+            `Total Attempts: ${this.totalAttempts}\n` +
+            `Lives: ${this.lives}\n\n` +
+            `Session Stats:\n` +
+            `Avg Input Time: ${antiCheat.avgInputTime.toFixed(0)}ms\n` +
+            `Total Inputs: ${antiCheat.inputCount}`
+        );
+    }
+    
+    formatDate(isoString) {
+        const date = new Date(isoString);
+        return date.toLocaleDateString();
+    }
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+}
+
+// ========================================
+// Initialize Game
+// ========================================
+
+// Wait for DOM to load
+document.addEventListener('DOMContentLoaded', () => {
+    window.game = new PiGame();
+});
+
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker registered'))
+            .catch(err => console.log('Service Worker registration failed:', err));
+    });
+}
+

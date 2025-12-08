@@ -1,0 +1,10 @@
+{
+  "name": "π∞ - The Infinite Pi Challenge",
+  "short_name": "Pi Challenge",
+  "description": "How many digits of Pi can you memorize? Challenge yourself and compete globally!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050510",
+  "theme_color": "#0a0a1a",
+  "orientation": "portrait"
+}

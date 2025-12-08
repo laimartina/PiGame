@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a1a">
+    <meta name="description" content="How many digits of Pi can you memorize? Challenge yourself and compete globally!">
+    <title>π∞ - The Infinite Pi Challenge</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>π</text></svg>">
+</head>
+<body>
+    <div class="stars"></div>
+    <div class="twinkling"></div>
+    
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="pi-symbol">π</span>
+                <span class="infinity">∞</span>
+            </div>
+            <button class="home-btn" id="homeBtn" title="Back to Home">⌂ Home</button>
+            <div class="lives-display">
+                <span class="lives-icon">♥</span>
+                <span class="lives-count" id="livesCount">5</span>
+                <button class="buy-lives-btn" id="buyLivesBtn" title="Get more lives">+</button>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="game-container" id="gameContainer">
+            <!-- Start Screen -->
+            <div class="screen active" id="startScreen">
+                <h1 class="title">The Infinite<br><span class="highlight">Pi Challenge</span></h1>
+                <p class="subtitle">How far into infinity can you go?</p>
+                
+                <div class="stats-preview">
+                    <div class="stat">
+                        <span class="stat-value" id="bestDigits">0</span>
+                        <span class="stat-label">Your Best</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="totalAttempts">0</span>
+                        <span class="stat-label">Attempts</span>
+                    </div>
+                </div>
+
+                <!-- Layout Selector -->
+                <div class="layout-selector">
+                    <span class="layout-label">Layout:</span>
+                    <div class="layout-options">
+                        <button class="layout-btn active" data-layout="classic" title="Classic - Type digits freely">
+                            <span class="layout-icon">⌨️</span>
+                            <span class="layout-name">Classic</span>
+                        </button>
+                        <button class="layout-btn" data-layout="reveal" title="Reveal - Uncover hidden digits">
+                            <span class="layout-icon">🔮</span>
+                            <span class="layout-name">Reveal</span>
+                        </button>
+                        <button class="layout-btn" data-layout="minimal" title="Minimal - Clean and focused">
+                            <span class="layout-icon">◯</span>
+                            <span class="layout-name">Minimal</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-glow" id="startBtn">
+                    <span>Begin Journey</span>
+                    <div class="btn-particles"></div>
+                </button>
+
+                <p class="hint">Enter digits of π: 3.14159265358979...</p>
+            </div>
+
+            <!-- Game Screen -->
+            <div class="screen" id="gameScreen">
+                <div class="game-header">
+                    <div class="digit-counter">
+                        <span class="counter-label">Digit</span>
+                        <span class="counter-value" id="digitCounter">0</span>
+                    </div>
+                    <div class="timer">
+                        <span class="timer-label">Time</span>
+                        <span class="timer-value" id="timer">0.00s</span>
+                    </div>
+                    <div class="mistakes">
+                        <span class="mistakes-label">Strikes</span>
+                        <span class="mistakes-value">
+                            <span class="strike" id="strike1">○</span>
+                            <span class="strike" id="strike2">○</span>
+                            <span class="strike" id="strike3">○</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- CLASSIC LAYOUT -->
+                <div class="layout-display layout-classic active" id="layoutClassic">
+                    <div class="pi-display">
+                        <div class="pi-prefix">π = 3.</div>
+                        <div class="digits-container" id="digitsContainer">
+                            <span class="cursor blink"></span>
+                        </div>
+                    </div>
+                    <div class="current-input-display">
+                        <span class="prompt">Next digit:</span>
+                        <span class="current-digit" id="currentDigit">?</span>
+                    </div>
+                </div>
+
+                <!-- REVEAL LAYOUT -->
+                <div class="layout-display layout-reveal" id="layoutReveal">
+                    <div class="reveal-header">
+                        <span class="reveal-prefix">π = 3.</span>
+                        <span class="reveal-progress">Uncover the digits...</span>
+                    </div>
+                    <div class="reveal-grid" id="revealGrid">
+                        <!-- Filled by JS with hidden digit cells -->
+                    </div>
+                    <div class="reveal-input-area">
+                        <span class="reveal-prompt">Enter digit #<span id="revealDigitNum">1</span></span>
+                        <div class="reveal-current-cell" id="revealCurrentCell">?</div>
+                    </div>
+                </div>
+
+                <!-- MINIMAL LAYOUT -->
+                <div class="layout-display layout-minimal" id="layoutMinimal">
+                    <div class="minimal-display">
+                        <div class="minimal-pi">π</div>
+                        <div class="minimal-digit-display">
+                            <span class="minimal-entered" id="minimalEntered"></span>
+                            <span class="minimal-cursor">|</span>
+                        </div>
+                        <div class="minimal-count">
+                            <span id="minimalCount">0</span> digits
+                        </div>
+                    </div>
+                </div>
+
+                <div class="numpad" id="numpad">
+                    <button class="num-btn" data-digit="1">1</button>
+                    <button class="num-btn" data-digit="2">2</button>
+                    <button class="num-btn" data-digit="3">3</button>
+                    <button class="num-btn" data-digit="4">4</button>
+                    <button class="num-btn" data-digit="5">5</button>
+                    <button class="num-btn" data-digit="6">6</button>
+                    <button class="num-btn" data-digit="7">7</button>
+                    <button class="num-btn" data-digit="8">8</button>
+                    <button class="num-btn" data-digit="9">9</button>
+                    <button class="num-btn btn-quit" id="quitBtn">✕</button>
+                    <button class="num-btn" data-digit="0">0</button>
+                    <button class="num-btn btn-save" id="saveBtn">✓</button>
+                </div>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div class="screen" id="gameOverScreen">
+                <div class="game-over-content">
+                    <h2 class="game-over-title" id="gameOverTitle">Game Over</h2>
+                    <div class="final-stats">
+                        <div class="final-stat main">
+                            <span class="final-stat-value" id="finalDigits">0</span>
+                            <span class="final-stat-label">Digits</span>
+                        </div>
+                        <div class="final-stat">
+                            <span class="final-stat-value" id="finalTime">0.00s</span>
+                            <span class="final-stat-label">Time</span>
+                        </div>
+                    </div>
+                    
+                    <div class="achievements" id="achievements"></div>
+
+                    <div class="game-over-actions">
+                        <button class="btn btn-primary" id="retryBtn">
+                            <span class="btn-cost">-1 ♥</span>
+                            Try Again
+                        </button>
+                        <button class="btn btn-secondary" id="homeFromGameOver">
+                            ⌂ Home
+                        </button>
+                        <button class="btn btn-secondary" id="leaderboardBtn">
+                            View Leaderboard
+                        </button>
+                    </div>
+
+                    <div class="no-lives-warning" id="noLivesWarning">
+                        <p>No lives remaining!</p>
+                        <button class="btn btn-accent" id="watchAdBtn">
+                            Watch Ad for +1 ♥
+                        </button>
+                        <button class="btn btn-accent" id="buyLivesBtn2">
+                            Buy Lives
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Screen -->
+            <div class="screen" id="leaderboardScreen">
+                <div class="leaderboard-header">
+                    <button class="back-btn" id="backBtn">←</button>
+                    <h2>Leaderboards</h2>
+                </div>
+
+                <div class="leaderboard-tabs">
+                    <button class="tab active" data-tab="speed">⚡ Speed Records</button>
+                    <button class="tab" data-tab="endurance">🏆 Most Digits</button>
+                </div>
+
+                <div class="leaderboard-content">
+                    <!-- Speed Leaderboard -->
+                    <div class="leaderboard-panel active" id="speedLeaderboard">
+                        <div class="speed-filter">
+                            <label>Digits:</label>
+                            <select id="digitFilter">
+                                <option value="10">10 digits</option>
+                                <option value="20">20 digits</option>
+                                <option value="50">50 digits</option>
+                                <option value="100">100 digits</option>
+                            </select>
+                        </div>
+                        <div class="leaderboard-list" id="speedList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Endurance Leaderboard -->
+                    <div class="leaderboard-panel" id="enduranceLeaderboard">
+                        <div class="leaderboard-list" id="enduranceList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shop Modal -->
+            <div class="modal" id="shopModal">
+                <div class="modal-content">
+                    <button class="modal-close" id="closeShop">×</button>
+                    <h2>Get More Lives</h2>
+                    
+                    <div class="shop-options">
+                        <div class="shop-item" data-lives="1" data-action="ad">
+                            <div class="shop-item-icon">📺</div>
+                            <div class="shop-item-info">
+                                <span class="shop-item-amount">+1 Life</span>
+                                <span class="shop-item-price">Watch Ad</span>
+                            </div>
+                        </div>
+                        <div class="shop-item" data-lives="10" data-price="0.99">
+                            <div class="shop-item-icon">💖</div>
+                            <div class="shop-item-info">
+                                <span class="shop-item-amount">10 Lives</span>
+                                <span class="shop-item-price">$0.99</span>
+                            </div>
+                        </div>
+                        <div class="shop-item popular" data-lives="50" data-price="4.99">
+                            <div class="shop-item-badge">Best Value</div>
+                            <div class="shop-item-icon">💝</div>
+                            <div class="shop-item-info">
+                                <span class="shop-item-amount">50 Lives</span>
+                                <span class="shop-item-price">$4.99</span>
+                            </div>
+                        </div>
+                        <div class="shop-item premium" data-lives="unlimited" data-price="2.99">
+                            <div class="shop-item-icon">👑</div>
+                            <div class="shop-item-info">
+                                <span class="shop-item-amount">Unlimited</span>
+                                <span class="shop-item-price">$2.99/mo</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="shop-note">Lives regenerate: +1 every hour</p>
+                </div>
+            </div>
+
+            <!-- Name Entry Modal -->
+            <div class="modal" id="nameModal">
+                <div class="modal-content">
+                    <h2>Enter Your Name</h2>
+                    <p>Save your score to the leaderboard!</p>
+                    <input type="text" id="playerName" placeholder="Your name" maxlength="20" autocomplete="off">
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" id="skipName">Skip</button>
+                        <button class="btn btn-primary" id="saveName">Save Score</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <button class="footer-btn" id="footerLeaderboard">🏆 Leaderboard</button>
+            <button class="footer-btn" id="footerStats">📊 Stats</button>
+        </footer>
+    </div>
+
+    <!-- Pi digits: 100k offline + unlimited via API -->
+    <script src="pi-digits.js"></script>
+    <script src="pi-digits-manager.js"></script>
+    
+    <!-- Core game -->
+    <script src="app.js"></script>
+    
+    <!-- Dev/Testing mode (remove in production) -->
+    <script src="dev-mode.js"></script>
+</body>
+</html>
+
