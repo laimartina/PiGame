@@ -144,9 +144,11 @@ class PiGame {
             // Layout displays
             layoutClassic: document.getElementById('layoutClassic'),
             layoutReveal: document.getElementById('layoutReveal'),
+            layoutTraining: document.getElementById('layoutTraining'),
             revealGrid: document.getElementById('revealGrid'),
             revealDigitNum: document.getElementById('revealDigitNum'),
             revealCurrentCell: document.getElementById('revealCurrentCell'),
+            trainingGrid: document.getElementById('trainingGrid'),
             
             // Game over
             gameOverTitle: document.getElementById('gameOverTitle'),
@@ -274,11 +276,15 @@ class PiGame {
         // Hide all layouts
         this.elements.layoutClassic?.classList.remove('active');
         this.elements.layoutReveal?.classList.remove('active');
+        this.elements.layoutTraining?.classList.remove('active');
         
         // Show current layout
         switch (this.currentLayout) {
             case 'reveal':
                 this.elements.layoutReveal?.classList.add('active');
+                break;
+            case 'training':
+                this.elements.layoutTraining?.classList.add('active');
                 break;
             default:
                 this.elements.layoutClassic?.classList.add('active');
@@ -352,6 +358,135 @@ class PiGame {
         const currentCell = this.elements.revealGrid.querySelector('.current');
         if (currentCell) {
             currentCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+    
+    initTrainingGrid() {
+        if (!this.elements.trainingGrid) return;
+        
+        // Clear grid
+        this.elements.trainingGrid.innerHTML = '';
+        
+        // Create 2 rows of 10 digits each (20 digits total)
+        for (let row = 0; row < 2; row++) {
+            const rowElement = document.createElement('div');
+            rowElement.className = 'training-row';
+            rowElement.dataset.rowIndex = row;
+            
+            for (let col = 0; col < 10; col++) {
+                const digitIndex = row * 10 + col;
+                const digit = this.getDigit(digitIndex);
+                
+                if (digit === null) break; // No more digits available
+                
+                const digitElement = document.createElement('div');
+                digitElement.className = 'training-digit waiting';
+                digitElement.dataset.index = digitIndex;
+                digitElement.textContent = digit;
+                
+                // First digit is current
+                if (digitIndex === 0) {
+                    digitElement.classList.remove('waiting');
+                    digitElement.classList.add('current');
+                }
+                
+                rowElement.appendChild(digitElement);
+            }
+            
+            this.elements.trainingGrid.appendChild(rowElement);
+        }
+    }
+    
+    updateTrainingGrid(index, isCorrect) {
+        if (!this.elements.trainingGrid) return;
+        
+        const allDigits = this.elements.trainingGrid.querySelectorAll('.training-digit');
+        
+        // Update all digits based on their state
+        allDigits.forEach(digitEl => {
+            const digitIndex = parseInt(digitEl.dataset.index);
+            
+            digitEl.classList.remove('current', 'waiting', 'entered', 'wrong');
+            
+            if (digitIndex < index) {
+                // Already entered - darker color
+                digitEl.classList.add('entered');
+            } else if (digitIndex === index) {
+                // Current digit
+                if (isCorrect) {
+                    digitEl.classList.add('entered');
+                } else {
+                    digitEl.classList.add('wrong');
+                    // Reset to current after animation
+                    setTimeout(() => {
+                        digitEl.classList.remove('wrong');
+                        digitEl.classList.add('current');
+                    }, 400);
+                }
+            } else {
+                // Waiting to be entered - lighter color
+                digitEl.classList.add('waiting');
+                
+                // Next digit becomes current
+                if (digitIndex === index + 1 && isCorrect) {
+                    digitEl.classList.remove('waiting');
+                    digitEl.classList.add('current');
+                }
+            }
+        });
+        
+        // When any row is complete (every 10 digits), remove first row and add new row
+        if (isCorrect && (index + 1) % 10 === 0) {
+            const firstRow = this.elements.trainingGrid.querySelector('.training-row[data-row-index="0"]');
+            if (firstRow) {
+                // Remove the completed first row
+                firstRow.remove();
+                
+                // Shift remaining rows up (second row becomes first row)
+                const allRows = this.elements.trainingGrid.querySelectorAll('.training-row');
+                allRows.forEach((row, i) => {
+                    row.dataset.rowIndex = i.toString();
+                });
+                
+                // Find the highest digit index to determine what the new row should be
+                let maxDisplayedIndex = -1;
+                this.elements.trainingGrid.querySelectorAll('.training-digit').forEach(digitEl => {
+                    const digitIndex = parseInt(digitEl.dataset.index);
+                    if (digitIndex > maxDisplayedIndex) {
+                        maxDisplayedIndex = digitIndex;
+                    }
+                });
+                
+                // Add new row at the end with the next 10 digits
+                const newRowStartIndex = maxDisplayedIndex + 1;
+                const newRowIndex = allRows.length;
+                const newRow = document.createElement('div');
+                newRow.className = 'training-row';
+                newRow.dataset.rowIndex = newRowIndex.toString();
+                
+                for (let col = 0; col < 10; col++) {
+                    const digitIndex = newRowStartIndex + col;
+                    const digit = this.getDigit(digitIndex);
+                    
+                    if (digit === null) break;
+                    
+                    const digitElement = document.createElement('div');
+                    digitElement.className = 'training-digit waiting';
+                    digitElement.dataset.index = digitIndex;
+                    digitElement.textContent = digit;
+                    
+                    newRow.appendChild(digitElement);
+                }
+                
+                this.elements.trainingGrid.appendChild(newRow);
+                
+                // Re-highlight the current digit after row operations
+                const currentDigitEl = this.elements.trainingGrid.querySelector(`.training-digit[data-index="${index + 1}"]`);
+                if (currentDigitEl) {
+                    currentDigitEl.classList.remove('waiting', 'entered', 'wrong');
+                    currentDigitEl.classList.add('current');
+                }
+            }
         }
     }
     
@@ -538,6 +673,7 @@ class PiGame {
         // Initialize layout
         this.updateLayoutDisplay();
         this.initRevealGrid();
+        this.initTrainingGrid();
         if (this.elements.revealCurrentCell) {
             this.elements.revealCurrentCell.textContent = '?';
         }
@@ -591,6 +727,10 @@ class PiGame {
                 }
                 break;
                 
+            case 'training':
+                this.updateTrainingGrid(prevIndex, true);
+                break;
+                
             default: // classic
                 // Add digit to display
                 const cursor = this.elements.digitsContainer.querySelector('.cursor');
@@ -633,6 +773,10 @@ class PiGame {
                         this.elements.revealCurrentCell.style.color = '';
                     }, 1000);
                 }
+                break;
+                
+            case 'training':
+                this.updateTrainingGrid(this.currentDigitIndex, false);
                 break;
                 
             default: // classic

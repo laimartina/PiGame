@@ -62,6 +62,10 @@
                             <span class="layout-icon">🔮</span>
                             <span class="layout-name">Reveal</span>
                         </button>
+                        <button class="layout-btn" data-layout="training" title="Training - Follow along with visible digits">
+                            <span class="layout-icon">📚</span>
+                            <span class="layout-name">Training</span>
+                        </button>
                     </div>
                 </div>
 
@@ -120,6 +124,16 @@
                     <div class="reveal-input-area">
                         <span class="reveal-prompt">Enter digit #<span id="revealDigitNum">1</span></span>
                         <div class="reveal-current-cell" id="revealCurrentCell">?</div>
+                    </div>
+                </div>
+
+                <!-- TRAINING LAYOUT -->
+                <div class="layout-display layout-training" id="layoutTraining">
+                    <div class="training-header">
+                        <span class="training-prefix">π = 3.</span>
+                    </div>
+                    <div class="training-grid" id="trainingGrid">
+                        <!-- Filled by JS with 2 rows of 10 digits -->
                     </div>
                 </div>
 

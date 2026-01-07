@@ -1372,4 +1372,101 @@ body {
     box-shadow: 0 0 30px rgba(254, 228, 64, 0.3);
 }
 
+/* ========================================
+   TRAINING LAYOUT
+   ======================================== */
+
+.layout-training {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.training-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.training-prefix {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--starlight);
+}
+
+.training-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.training-row {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.training-digit {
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    flex-shrink: 0;
+}
+
+/* Waiting to be entered - lighter color */
+.training-digit.waiting {
+    background: rgba(0, 245, 212, 0.15);
+    color: rgba(0, 245, 212, 0.5);
+    border-color: rgba(0, 245, 212, 0.2);
+}
+
+/* Current digit to enter - highlighted */
+.training-digit.current {
+    background: var(--nebula);
+    color: var(--comet);
+    border-color: var(--comet);
+    box-shadow: 0 0 20px rgba(254, 228, 64, 0.6);
+    animation: trainingPulse 1s ease-in-out infinite;
+    transform: scale(1.1);
+}
+
+/* Entered digit - darker color */
+.training-digit.entered {
+    background: rgba(0, 245, 212, 0.4);
+    color: var(--nova);
+    border-color: rgba(0, 245, 212, 0.6);
+}
+
+/* Wrong digit - error state */
+.training-digit.wrong {
+    background: var(--error);
+    color: var(--starlight);
+    border-color: var(--error);
+    animation: wrongShake 0.4s ease;
+}
+
+@keyframes trainingPulse {
+    0%, 100% { 
+        box-shadow: 0 0 20px rgba(254, 228, 64, 0.6);
+        transform: scale(1.1);
+    }
+    50% { 
+        box-shadow: 0 0 30px rgba(254, 228, 64, 0.9);
+        transform: scale(1.15);
+    }
+}
+
 
