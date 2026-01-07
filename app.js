@@ -623,14 +623,21 @@ class PiGame {
     // ========================================
     
     startGame() {
-        if (this.lives <= 0) {
-            this.openShop();
-            return;
+        // In training mode, skip life checks and deduction
+        if (this.currentLayout !== 'training') {
+            if (this.lives <= 0) {
+                this.openShop();
+                return;
+            }
+            
+            // Deduct life (only in non-training modes)
+            this.lives--;
+            this.saveLives();
+            
+            // Update attempts (only in non-training modes)
+            this.totalAttempts++;
+            localStorage.setItem('piGameAttempts', this.totalAttempts);
         }
-        
-        // Deduct life
-        this.lives--;
-        this.saveLives();
         
         // Reset game state
         this.currentDigitIndex = 0;
@@ -644,10 +651,6 @@ class PiGame {
         this.mouseMovements = 0;
         this.touchEvents = 0;
         this.suspicionScore = 0;
-        
-        // Update attempts
-        this.totalAttempts++;
-        localStorage.setItem('piGameAttempts', this.totalAttempts);
         
         // Reset UI
         this.elements.digitsContainer.innerHTML = '<span class="cursor blink"></span>';
@@ -750,9 +753,11 @@ class PiGame {
     handleWrongDigit(digit, expected) {
         this.mistakes++;
         
-        // Update strikes
-        this.elements.strikes[this.mistakes - 1].textContent = '●';
-        this.elements.strikes[this.mistakes - 1].classList.add('active');
+        // Update strikes (only show in non-training modes)
+        if (this.currentLayout !== 'training') {
+            this.elements.strikes[this.mistakes - 1].textContent = '●';
+            this.elements.strikes[this.mistakes - 1].classList.add('active');
+        }
         
         // Update based on current layout
         switch (this.currentLayout) {
@@ -795,8 +800,8 @@ class PiGame {
                 }, 300);
         }
         
-        // Check game over
-        if (this.mistakes >= this.maxMistakes) {
+        // Check game over (skip in training mode - unlimited mistakes)
+        if (this.currentLayout !== 'training' && this.mistakes >= this.maxMistakes) {
             this.endGame(false);
         }
     }
