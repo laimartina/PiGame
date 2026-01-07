@@ -23,7 +23,9 @@ class PiGame {
         this.enteredDigits = [];
         
         // Layout state
-        this.currentLayout = localStorage.getItem('piGameLayout') || 'classic';
+        const savedLayout = localStorage.getItem('piGameLayout');
+        // If saved layout is 'minimal', default to 'classic' since minimal mode is removed
+        this.currentLayout = (savedLayout === 'minimal') ? 'classic' : (savedLayout || 'classic');
         this.revealGridSize = 50; // Number of cells visible in reveal mode
         
         // Anti-cheat state
@@ -142,12 +144,9 @@ class PiGame {
             // Layout displays
             layoutClassic: document.getElementById('layoutClassic'),
             layoutReveal: document.getElementById('layoutReveal'),
-            layoutMinimal: document.getElementById('layoutMinimal'),
             revealGrid: document.getElementById('revealGrid'),
             revealDigitNum: document.getElementById('revealDigitNum'),
             revealCurrentCell: document.getElementById('revealCurrentCell'),
-            minimalEntered: document.getElementById('minimalEntered'),
-            minimalCount: document.getElementById('minimalCount'),
             
             // Game over
             gameOverTitle: document.getElementById('gameOverTitle'),
@@ -253,6 +252,10 @@ class PiGame {
     }
     
     setLayout(layout) {
+        // Prevent setting minimal mode (removed feature)
+        if (layout === 'minimal') {
+            layout = 'classic';
+        }
         this.currentLayout = layout;
         localStorage.setItem('piGameLayout', layout);
         
@@ -271,15 +274,11 @@ class PiGame {
         // Hide all layouts
         this.elements.layoutClassic?.classList.remove('active');
         this.elements.layoutReveal?.classList.remove('active');
-        this.elements.layoutMinimal?.classList.remove('active');
         
         // Show current layout
         switch (this.currentLayout) {
             case 'reveal':
                 this.elements.layoutReveal?.classList.add('active');
-                break;
-            case 'minimal':
-                this.elements.layoutMinimal?.classList.add('active');
                 break;
             default:
                 this.elements.layoutClassic?.classList.add('active');
@@ -353,18 +352,6 @@ class PiGame {
         const currentCell = this.elements.revealGrid.querySelector('.current');
         if (currentCell) {
             currentCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-    
-    updateMinimalDisplay() {
-        if (!this.elements.minimalEntered) return;
-        
-        // Show last 8 digits entered
-        const lastDigits = this.enteredDigits.slice(-8).join('');
-        this.elements.minimalEntered.textContent = lastDigits;
-        
-        if (this.elements.minimalCount) {
-            this.elements.minimalCount.textContent = this.currentDigitIndex;
         }
     }
     
@@ -551,12 +538,6 @@ class PiGame {
         // Initialize layout
         this.updateLayoutDisplay();
         this.initRevealGrid();
-        if (this.elements.minimalEntered) {
-            this.elements.minimalEntered.textContent = '';
-        }
-        if (this.elements.minimalCount) {
-            this.elements.minimalCount.textContent = '0';
-        }
         if (this.elements.revealCurrentCell) {
             this.elements.revealCurrentCell.textContent = '?';
         }
@@ -610,10 +591,6 @@ class PiGame {
                 }
                 break;
                 
-            case 'minimal':
-                this.updateMinimalDisplay();
-                break;
-                
             default: // classic
                 // Add digit to display
                 const cursor = this.elements.digitsContainer.querySelector('.cursor');
@@ -655,16 +632,6 @@ class PiGame {
                         this.elements.revealCurrentCell.textContent = '?';
                         this.elements.revealCurrentCell.style.color = '';
                     }, 1000);
-                }
-                break;
-                
-            case 'minimal':
-                // Flash the display
-                if (this.elements.minimalEntered) {
-                    this.elements.minimalEntered.style.color = 'var(--error)';
-                    setTimeout(() => {
-                        this.elements.minimalEntered.style.color = '';
-                    }, 300);
                 }
                 break;
                 
