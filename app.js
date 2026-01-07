@@ -139,7 +139,7 @@ class PiGame {
                 document.getElementById('strike2'),
                 document.getElementById('strike3')
             ],
-            numpad: document.getElementById('numpad'),
+            gameControls: document.getElementById('gameControls'),
             
             // Layout displays
             layoutClassic: document.getElementById('layoutClassic'),
@@ -174,20 +174,7 @@ class PiGame {
         // Start button
         document.getElementById('startBtn').addEventListener('click', () => this.startGame());
         
-        // Numpad buttons
-        this.elements.numpad.querySelectorAll('.num-btn[data-digit]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.isTrustedInput = e.isTrusted;
-                this.lastKeySource = 'numpad';
-                this.handleDigitInput(btn.dataset.digit);
-            });
-            
-            // Touch events for mobile
-            btn.addEventListener('touchstart', (e) => {
-                this.touchEvents++;
-                this.isTrustedInput = e.isTrusted;
-            }, { passive: true });
-        });
+        // Note: Digit input is now only via keyboard (numpad removed)
         
         // Keyboard input
         document.addEventListener('keydown', (e) => {
@@ -673,7 +660,15 @@ class PiGame {
         // Initialize layout
         this.updateLayoutDisplay();
         this.initRevealGrid();
-        this.initTrainingGrid();
+        // Only initialize training grid if in training mode
+        if (this.currentLayout === 'training') {
+            this.initTrainingGrid();
+        } else {
+            // Clear training grid if not in training mode
+            if (this.elements.trainingGrid) {
+                this.elements.trainingGrid.innerHTML = '';
+            }
+        }
         if (this.elements.revealCurrentCell) {
             this.elements.revealCurrentCell.textContent = '?';
         }
@@ -692,9 +687,7 @@ class PiGame {
         
         // Anti-cheat validation
         if (!this.validateInput()) {
-            // Add visual feedback for rejected input
-            this.elements.numpad.classList.add('flash-wrong');
-            setTimeout(() => this.elements.numpad.classList.remove('flash-wrong'), 300);
+            // Input rejected - visual feedback could be added here if needed
             return;
         }
         
