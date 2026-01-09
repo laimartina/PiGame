@@ -180,6 +180,9 @@ class PiGame {
     }
     
     initEventListeners() {
+        // Music toggle
+        this.initMusic();
+        
         // Start button
         document.getElementById('startBtn').addEventListener('click', () => this.startGame());
         
@@ -1252,6 +1255,73 @@ class PiGame {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+    
+    // ========================================
+    // Background Music
+    // ========================================
+    
+    initMusic() {
+        this.backgroundMusic = document.getElementById('backgroundMusic');
+        this.musicToggle = document.getElementById('musicToggle');
+        this.isMusicPlaying = localStorage.getItem('piGameMusic') !== 'false'; // Default to true
+        
+        // Set initial volume (30% for background music)
+        if (this.backgroundMusic) {
+            this.backgroundMusic.volume = 0.3;
+        }
+        
+        // Load saved music state
+        if (this.isMusicPlaying && this.backgroundMusic) {
+            // Try to play (may require user interaction first)
+            this.backgroundMusic.play().catch(() => {
+                // Autoplay blocked - will start on first user interaction
+                console.log('Music autoplay blocked, will start on user interaction');
+            });
+        }
+        
+        // Toggle button
+        if (this.musicToggle) {
+            this.musicToggle.addEventListener('click', () => this.toggleMusic());
+            this.updateMusicButton();
+        }
+        
+        // Start music on first user interaction (if not already playing)
+        const startMusicOnInteraction = () => {
+            if (this.isMusicPlaying && this.backgroundMusic && this.backgroundMusic.paused) {
+                this.backgroundMusic.play().catch(() => {});
+            }
+            // Remove listeners after first interaction
+            document.removeEventListener('click', startMusicOnInteraction);
+            document.removeEventListener('keydown', startMusicOnInteraction);
+        };
+        
+        document.addEventListener('click', startMusicOnInteraction, { once: true });
+        document.addEventListener('keydown', startMusicOnInteraction, { once: true });
+    }
+    
+    toggleMusic() {
+        if (!this.backgroundMusic) return;
+        
+        this.isMusicPlaying = !this.isMusicPlaying;
+        localStorage.setItem('piGameMusic', this.isMusicPlaying.toString());
+        
+        if (this.isMusicPlaying) {
+            this.backgroundMusic.play().catch(() => {
+                console.log('Failed to play music');
+            });
+        } else {
+            this.backgroundMusic.pause();
+        }
+        
+        this.updateMusicButton();
+    }
+    
+    updateMusicButton() {
+        if (this.musicToggle) {
+            this.musicToggle.textContent = this.isMusicPlaying ? '🎵' : '🔇';
+            this.musicToggle.classList.toggle('muted', !this.isMusicPlaying);
+        }
     }
 }
 

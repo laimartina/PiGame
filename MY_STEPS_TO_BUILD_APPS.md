@@ -55,7 +55,7 @@ Follow these steps in order to create your mobile apps.
 - Node.js is NOT installed yet
 - Install Node.js first (Step 1), restart computer, then try again
 
-**Status:** ☐ Not started  ☐ In progress  ☐ Completed
+**Status:** ☐ Not started  ☐ In progress   ☐ Completed
 
 **See HOW_TO_RUN_SETUP.md for more detailed help**
 

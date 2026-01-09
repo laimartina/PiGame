@@ -17,6 +17,15 @@
     <div class="stars"></div>
     <div class="twinkling"></div>
     
+    <!-- Background Music -->
+    <audio id="backgroundMusic" loop preload="auto">
+        <!-- Add your music file to the project and update the path below -->
+        <!-- Example: <source src="music/background.mp3" type="audio/mpeg"> -->
+        <!-- For now using a placeholder - replace with your music file -->
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    
     <div class="app-container">
         <!-- Header -->
         <header class="header">
@@ -25,10 +34,13 @@
                 <span class="infinity">∞</span>
             </div>
             <button class="home-btn" id="homeBtn" title="Back to Home">⌂ Home</button>
-            <div class="lives-display">
-                <span class="lives-icon">♥</span>
-                <span class="lives-count" id="livesCount">5</span>
-                <button class="buy-lives-btn" id="buyLivesBtn" title="Get more lives">+</button>
+            <div class="header-controls">
+                <button class="music-btn" id="musicToggle" title="Toggle Music">🎵</button>
+                <div class="lives-display">
+                    <span class="lives-icon">♥</span>
+                    <span class="lives-count" id="livesCount">5</span>
+                    <button class="buy-lives-btn" id="buyLivesBtn" title="Get more lives">+</button>
+                </div>
             </div>
         </header>
 
