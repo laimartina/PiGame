@@ -1,0 +1,42 @@
+========================================
+SIMPLE CHECKLIST - Build Mobile Apps
+========================================
+
+STEP 1: Install Node.js
+   [ ] Go to nodejs.org
+   [ ] Download LTS version
+   [ ] Install it
+   [ ] Restart computer
+   [ ] Verify: node --version
+
+STEP 2: Run Setup
+   [ ] Double-click setup-mobile-apps.bat
+   [ ] Wait for completion
+
+STEP 3: Install Android Studio
+   [ ] Go to developer.android.com/studio
+   [ ] Download and install
+   [ ] Install Android SDK Platform 33+
+
+STEP 4: Open Android Project
+   [ ] Run: npm run cap:open:android
+   [ ] Wait for Gradle sync
+
+STEP 5: Build App
+   [ ] Build → Build APK(s)
+   [ ] Find APK in android/app/build/outputs/apk/debug/
+
+STEP 6: iOS (Mac only)
+   [ ] Install Xcode from App Store
+   [ ] Run: npm run cap:open:ios
+   [ ] Product → Archive
+
+========================================
+Quick Commands:
+========================================
+npm run build          - Build web app
+npm run cap:sync       - Sync to mobile
+npm run cap:open:android - Open Android Studio
+npm run cap:open:ios   - Open Xcode (Mac)
+
+========================================

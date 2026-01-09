@@ -1,0 +1,34 @@
+{
+  "name": "pi-challenge",
+  "version": "1.0.0",
+  "description": "π∞ - The Infinite Pi Challenge",
+  "main": "index.html",
+  "scripts": {
+    "build": "npm run copy-assets",
+    "copy-assets": "node scripts/copy-assets.js",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios"
+  },
+  "keywords": [
+    "pi",
+    "game",
+    "challenge",
+    "memory"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@capacitor/cli": "^5.5.1"
+  },
+  "dependencies": {
+    "@capacitor/core": "^5.5.1",
+    "@capacitor/android": "^5.5.1",
+    "@capacitor/ios": "^5.5.1",
+    "@capacitor/app": "^5.0.6",
+    "@capacitor/splash-screen": "^5.0.6",
+    "@capacitor/status-bar": "^5.0.6"
+  }
+}

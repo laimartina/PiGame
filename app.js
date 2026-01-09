@@ -1160,10 +1160,10 @@ class PiGame {
         // Simulate watching an ad
         alert('📺 Watching ad...\n\nIn production, this would show a real ad from AdMob, Unity Ads, or similar.');
         
-        // Give life after "watching"
+        // Give 5 lives after "watching"
         setTimeout(() => {
-            this.addLives(1);
-            alert('You earned +1 life! ❤️');
+            this.addLives(5);
+            alert('You earned +5 lives! ❤️❤️❤️❤️❤️');
         }, 500);
     }
     

@@ -4,7 +4,12 @@ const ASSETS = [
   '/index.html',
   '/styles.css',
   '/app.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/sw.js',
+  '/pi-digits.js',
+  '/pi-digits-manager.js',
+  '/supabase.js',
+  '/dev-mode.js'
 ];
 
 // Install - cache assets

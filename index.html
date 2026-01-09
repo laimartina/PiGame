@@ -176,7 +176,7 @@
                     <div class="no-lives-warning" id="noLivesWarning">
                         <p>No lives remaining!</p>
                         <button class="btn btn-accent" id="watchAdBtn">
-                            Watch Ad for +1 ♥
+                            Watch Ad for +5 ♥
                         </button>
                         <button class="btn btn-accent" id="buyLivesBtn2">
                             Buy Lives
@@ -230,10 +230,10 @@
                     <h2>Get More Lives</h2>
                     
                     <div class="shop-options">
-                        <div class="shop-item" data-lives="1" data-action="ad">
+                        <div class="shop-item" data-lives="5" data-action="ad">
                             <div class="shop-item-icon">📺</div>
                             <div class="shop-item-info">
-                                <span class="shop-item-amount">+1 Life</span>
+                                <span class="shop-item-amount">+5 Lives</span>
                                 <span class="shop-item-price">Watch Ad</span>
                             </div>
                         </div>
@@ -244,19 +244,19 @@
                                 <span class="shop-item-price">$0.99</span>
                             </div>
                         </div>
-                        <div class="shop-item popular" data-lives="50" data-price="4.99">
-                            <div class="shop-item-badge">Best Value</div>
+                        <div class="shop-item" data-lives="50" data-price="3.99">
                             <div class="shop-item-icon">💝</div>
                             <div class="shop-item-info">
                                 <span class="shop-item-amount">50 Lives</span>
-                                <span class="shop-item-price">$4.99</span>
+                                <span class="shop-item-price">$3.99</span>
                             </div>
                         </div>
-                        <div class="shop-item premium" data-lives="unlimited" data-price="2.99">
+                        <div class="shop-item premium popular" data-lives="unlimited" data-price="5.99">
+                            <div class="shop-item-badge">Best Value</div>
                             <div class="shop-item-icon">👑</div>
                             <div class="shop-item-info">
                                 <span class="shop-item-amount">Unlimited</span>
-                                <span class="shop-item-price">$2.99/mo</span>
+                                <span class="shop-item-price">$5.99/mo</span>
                             </div>
                         </div>
                     </div>
@@ -284,6 +284,16 @@
             <button class="footer-btn" id="footerLeaderboard">🏆 Leaderboard</button>
             <button class="footer-btn" id="footerStats">📊 Stats</button>
         </footer>
+
+        <!-- Banner Ad -->
+        <div class="banner-ad" id="bannerAd">
+            <div class="banner-ad-content">
+                <span class="banner-ad-label">Ad</span>
+                <div class="banner-ad-placeholder">
+                    <span class="banner-ad-text">Advertisement</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Pi digits: 100k offline + unlimited via API -->
