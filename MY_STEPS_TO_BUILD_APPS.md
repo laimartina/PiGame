@@ -23,17 +23,41 @@ Follow these steps in order to create your mobile apps.
 ## ✅ Step 2: Run Setup Script (I can help with this)
 
 **After Node.js is installed:**
-1. Open Command Prompt in this folder (PiGame)
-2. Double-click `setup-mobile-apps.bat`
-   - OR right-click in the folder → "Open in Terminal" → type: `setup-mobile-apps.bat`
-3. Wait for it to complete (may take 5-10 minutes)
-4. It will:
-   - Install dependencies
-   - Build your web app
-   - Create Android project
-   - Sync everything
+
+### How to Run the Batch File:
+
+**If double-clicking doesn't work, try these methods:**
+
+**Method 1 (Easiest):**
+1. Right-click on `setup-mobile-apps.bat`
+2. Select **"Run as administrator"** or **"Open with"** → **"Command Prompt"**
+
+**Method 2:**
+1. Open File Explorer in the `PiGame` folder
+2. Click in the address bar and type: `cmd` then press Enter
+3. Type: `setup-mobile-apps.bat` and press Enter
+
+**Method 3:**
+1. Press Windows Key + R
+2. Type: `cmd` and press Enter
+3. Type: `cd C:\Users\raych\Documents\PiGame`
+4. Type: `setup-mobile-apps.bat` and press Enter
+
+**What to expect:**
+- The script will check for Node.js first
+- If Node.js is installed, you'll see version numbers
+- Then it will install dependencies (takes 5-10 minutes)
+- It will build your web app
+- It will create Android project
+- It will sync everything
+
+**If the window closes immediately:**
+- Node.js is NOT installed yet
+- Install Node.js first (Step 1), restart computer, then try again
 
 **Status:** ☐ Not started  ☐ In progress  ☐ Completed
+
+**See HOW_TO_RUN_SETUP.md for more detailed help**
 
 ---
 

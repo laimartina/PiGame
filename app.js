@@ -43,6 +43,13 @@ class PiGame {
         this.bestScore = parseInt(localStorage.getItem('piGameBest')) || 0;
         this.totalAttempts = parseInt(localStorage.getItem('piGameAttempts')) || 0;
         
+        // Session tracking - separate highest for each mode
+        this.sessionHighestDigits = {
+            classic: 0,
+            reveal: 0,
+            training: 0
+        };
+        
         // Leaderboards
         this.speedLeaderboard = this.loadLeaderboard('speed');
         this.enduranceLeaderboard = this.loadLeaderboard('endurance');
@@ -56,6 +63,7 @@ class PiGame {
         this.initLayoutSelector();
         this.initAntiCheat();
         this.updateUI();
+        this.updateDigitCounterDisplay(); // Initialize counter displays
     }
     
     // ========================================
@@ -131,6 +139,7 @@ class PiGame {
             bestDigits: document.getElementById('bestDigits'),
             totalAttempts: document.getElementById('totalAttempts'),
             digitCounter: document.getElementById('digitCounter'),
+            highestCounter: document.getElementById('highestCounter'),
             timer: document.getElementById('timer'),
             digitsContainer: document.getElementById('digitsContainer'),
             currentDigit: document.getElementById('currentDigit'),
@@ -256,6 +265,8 @@ class PiGame {
         // Update active layout display if in game
         if (this.isPlaying) {
             this.updateLayoutDisplay();
+            // Update counter display to show correct highest for new mode
+            this.updateDigitCounterDisplay();
         }
     }
     
@@ -655,6 +666,9 @@ class PiGame {
         // Reset UI
         this.elements.digitsContainer.innerHTML = '<span class="cursor blink"></span>';
         this.elements.currentDigit.textContent = '?';
+        this.elements.digitCounter.textContent = '0'; // Reset current counter display
+        // Keep highest counter showing session highest (don't reset it)
+        this.updateDigitCounterDisplay(); // Update both counters
         this.elements.strikes.forEach(s => {
             s.textContent = '○';
             s.classList.remove('active');
@@ -711,8 +725,14 @@ class PiGame {
         const prevIndex = this.currentDigitIndex;
         this.currentDigitIndex++;
         
-        // Update counter
-        this.elements.digitCounter.textContent = this.currentDigitIndex;
+        // Update session highest for current mode if needed
+        const currentMode = this.currentLayout === 'training' ? 'training' : (this.currentLayout === 'reveal' ? 'reveal' : 'classic');
+        if (this.currentDigitIndex > this.sessionHighestDigits[currentMode]) {
+            this.sessionHighestDigits[currentMode] = this.currentDigitIndex;
+        }
+        
+        // Update counter display
+        this.updateDigitCounterDisplay();
         
         // Update based on current layout
         switch (this.currentLayout) {
@@ -827,6 +847,12 @@ class PiGame {
         
         const finalTime = (Date.now() - this.startTime) / 1000;
         const finalDigits = this.currentDigitIndex;
+        
+        // Update session highest for current mode
+        const currentMode = this.currentLayout === 'training' ? 'training' : (this.currentLayout === 'reveal' ? 'reveal' : 'classic');
+        if (finalDigits > this.sessionHighestDigits[currentMode]) {
+            this.sessionHighestDigits[currentMode] = finalDigits;
+        }
         
         // Check for new best
         const isNewBest = finalDigits > this.bestScore;
@@ -1188,6 +1214,20 @@ class PiGame {
         this.elements.livesCount.textContent = this.lives;
         this.elements.bestDigits.textContent = this.bestScore;
         this.elements.totalAttempts.textContent = this.totalAttempts;
+        this.updateDigitCounterDisplay();
+    }
+    
+    updateDigitCounterDisplay() {
+        // Update current counter
+        if (this.elements.digitCounter) {
+            this.elements.digitCounter.textContent = this.currentDigitIndex.toString();
+        }
+        
+        // Update highest counter based on current mode
+        if (this.elements.highestCounter) {
+            const currentMode = this.currentLayout === 'training' ? 'training' : (this.currentLayout === 'reveal' ? 'reveal' : 'classic');
+            this.elements.highestCounter.textContent = this.sessionHighestDigits[currentMode].toString();
+        }
     }
     
     showStats() {

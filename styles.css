@@ -405,12 +405,15 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .digit-counter, .timer, .mistakes {
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-width: 60px; /* Prevent layout shift */
 }
 
 .counter-label, .timer-label, .mistakes-label {
@@ -426,13 +429,24 @@ body {
     font-weight: 900;
     color: var(--nova);
     text-shadow: 0 0 20px rgba(0, 245, 212, 0.5);
+    min-width: 50px; /* Prevent layout shift */
+    text-align: center;
+}
+
+#highestCounter {
+    color: var(--supernova);
+    text-shadow: 0 0 20px rgba(0, 187, 249, 0.5);
+    min-width: 50px; /* Prevent layout shift */
+    text-align: center;
 }
 
 .timer-value {
-    font-family: var(--font-display);
+    font-family: var(--font-mono); /* Use monospace for consistent width */
     font-size: 20px;
     font-weight: 700;
     color: var(--supernova);
+    min-width: 60px; /* Fixed width to prevent layout shift */
+    text-align: center;
 }
 
 .mistakes-value {
