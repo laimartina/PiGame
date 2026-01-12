@@ -263,7 +263,6 @@ class PiGame {
         
         // Footer
         document.getElementById('footerLeaderboard').addEventListener('click', () => this.showScreen('leaderboard'));
-        document.getElementById('footerStats').addEventListener('click', () => this.showStats());
     }
     
     // ========================================
@@ -1506,19 +1505,6 @@ class PiGame {
             const currentMode = this.currentLayout === 'training' ? 'training' : (this.currentLayout === 'reveal' ? 'reveal' : 'classic');
             this.elements.highestCounter.textContent = this.sessionHighestDigits[currentMode].toString();
         }
-    }
-    
-    showStats() {
-        const antiCheat = this.getAntiCheatData();
-        alert(
-            `📊 Your Stats\n\n` +
-            `Best Score: ${this.bestScore} digits\n` +
-            `Total Attempts: ${this.totalAttempts}\n` +
-            `Lives: ${this.lives}\n\n` +
-            `Session Stats:\n` +
-            `Avg Input Time: ${antiCheat.avgInputTime.toFixed(0)}ms\n` +
-            `Total Inputs: ${antiCheat.inputCount}`
-        );
     }
     
     formatDate(isoString) {
