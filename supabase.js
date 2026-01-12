@@ -340,16 +340,26 @@ class SupabaseClient {
         const endurance = JSON.parse(localStorage.getItem('piGame_enduranceLeaderboard') || '[]');
         const name = localStorage.getItem('piGameName') || 'You';
         
-        endurance.push({
+        // Add all records, even if worse than existing ones
+        const newEntry = {
             name,
             username: name,
             max_digits: scoreData.digits,
+            digits: scoreData.digits,
             time_ms: scoreData.timeMs,
+            time: scoreData.timeMs / 1000,
+            date: new Date().toISOString(),
             created_at: new Date().toISOString()
-        });
+        };
         
-        endurance.sort((a, b) => b.max_digits - a.max_digits);
-        localStorage.setItem('piGame_enduranceLeaderboard', JSON.stringify(endurance.slice(0, 100)));
+        endurance.push(newEntry);
+        
+        endurance.sort((a, b) => {
+            const aDigits = a.max_digits || a.digits || 0;
+            const bDigits = b.max_digits || b.digits || 0;
+            return bDigits - aDigits;
+        });
+        localStorage.setItem('piGame_enduranceLeaderboard', JSON.stringify(endurance.slice(0, 200)));
         
         // Speed records
         const milestones = [10, 20, 50, 100, 200, 500, 1000];

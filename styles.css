@@ -154,6 +154,7 @@ body {
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     z-index: 10;
+    position: relative;
 }
 
 .header-controls {
@@ -445,6 +446,9 @@ body {
     display: flex;
     align-items: center;
     gap: 5px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .home-btn:hover {
@@ -842,6 +846,16 @@ body {
     color: var(--twilight);
     cursor: pointer;
     transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.tab[data-tab="speed"] {
+    padding-left: 8px;
 }
 
 .tab.active {
@@ -861,6 +875,50 @@ body {
 }
 
 .leaderboard-panel.active {
+    display: flex;
+}
+
+.training-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.training-tab {
+    flex: 1;
+    padding: 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    border: none;
+    border-radius: 8px;
+    background: var(--nebula);
+    color: var(--twilight);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.training-tab:hover {
+    background: var(--stardust);
+}
+
+.training-tab.active {
+    background: linear-gradient(135deg, var(--nova), var(--supernova));
+    color: var(--void);
+}
+
+.training-content {
+    flex: 1;
+    overflow: hidden;
+}
+
+.training-panel {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+}
+
+.training-panel.active {
     display: flex;
 }
 
@@ -892,6 +950,20 @@ body {
     overflow-y: auto;
 }
 
+.speed-group-header {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--nova);
+    padding: 15px 15px 8px 15px;
+    margin-top: 20px;
+    border-bottom: 1px solid rgba(0, 245, 212, 0.2);
+}
+
+.speed-group-header:first-child {
+    margin-top: 0;
+}
+
 .leaderboard-entry {
     display: flex;
     align-items: center;
@@ -920,6 +992,9 @@ body {
     text-align: center;
 }
 
+.entry-rank.odd { color: #fee440; } /* Yellow for odd numbers */
+.entry-rank.even { color: #ffffff; } /* White for even numbers */
+
 .entry-rank.gold { color: #ffd700; }
 .entry-rank.silver { color: #c0c0c0; }
 .entry-rank.bronze { color: #cd7f32; }
@@ -946,7 +1021,9 @@ body {
 }
 
 .entry-time {
-    font-size: 12px;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
     color: var(--supernova);
 }
 
