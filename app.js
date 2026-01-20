@@ -36,6 +36,7 @@ class PiGame {
         this.suspicionScore = 0;
         this.isTrustedInput = false;
         this.lastKeySource = null;
+        this.devModeActive = false; // Flag to disable anti-cheat in dev mode
         
         // Player data (from localStorage)
         this.lives = this.loadLives();
@@ -601,6 +602,12 @@ class PiGame {
     }
     
     validateInput() {
+        // Skip anti-cheat validation in dev mode
+        if (this.devModeActive) {
+            this.lastInputTime = Date.now();
+            return true;
+        }
+        
         const now = Date.now();
         const timeSinceLastInput = now - this.lastInputTime;
         

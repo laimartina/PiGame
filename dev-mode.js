@@ -48,6 +48,7 @@ class DevMode {
     enable() {
         this.isEnabled = true;
         this.game.lives = 999; // Unlimited lives
+        this.game.devModeActive = true; // Disable anti-cheat
         this.game.updateUI();
         this.createDebugPanel();
         console.log('🔧 Dev Mode ENABLED');
@@ -65,6 +66,7 @@ class DevMode {
         this.stopAutoPlay();
         this.removeDebugPanel();
         this.game.lives = this.game.loadLives();
+        this.game.devModeActive = false; // Re-enable anti-cheat
         this.game.updateUI();
         console.log('🔧 Dev Mode DISABLED');
     }
@@ -327,7 +329,11 @@ class DevMode {
             if (nextDigit !== null) {
                 // Bypass anti-cheat for testing
                 this.game.isTrustedInput = true;
-                this.game.lastInputTime = Date.now() - 100; // Fake reasonable timing
+                // Add some randomness to timing to avoid variance warnings
+                const randomDelay = Math.random() * 20 - 10; // -10 to +10ms variation
+                this.game.lastInputTime = Date.now() - (100 + randomDelay);
+                // Reset suspicion score to prevent false positives
+                this.game.suspicionScore = 0;
                 this.game.handleDigitInput(nextDigit);
             } else {
                 // No more digits available
@@ -462,49 +468,131 @@ class DevMode {
         addBatch();
     }
     
-    addFakeLeaderboardEntries() {
+    async addFakeLeaderboardEntries() {
         const names = [
             'PiMaster3000', 'CircleGuru', 'InfiniteMemory', 'DigitKing',
             'MathWizard', 'PiReciter', 'NumberNinja', 'MemoryChamp',
             'BrainiacPi', 'DigitalDreamer', 'PiPioneer', 'MathGenius'
         ];
         
-        // Add endurance entries
-        const endurance = [];
-        for (let i = 0; i < 20; i++) {
-            endurance.push({
-                name: names[i % names.length] + (i > 11 ? i : ''),
-                username: names[i % names.length],
-                max_digits: Math.floor(Math.random() * 5000) + 100,
-                time_ms: Math.floor(Math.random() * 300000) + 10000,
-                created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
-            });
-        }
-        endurance.sort((a, b) => b.max_digits - a.max_digits);
-        localStorage.setItem('piGame_enduranceLeaderboard', JSON.stringify(endurance));
+        // Check if Supabase is configured
+        const useSupabase = this.game.supabase && this.game.supabase.isConfigured;
         
-        // Add speed entries for each milestone
-        const speedData = {};
-        [10, 20, 50, 100].forEach(milestone => {
-            const key = `speed_${milestone}`;
-            speedData[key] = [];
-            for (let i = 0; i < 10; i++) {
-                speedData[key].push({
-                    name: names[i % names.length],
-                    username: names[i % names.length],
-                    time_ms: Math.floor((milestone * 100) + Math.random() * milestone * 50),
-                    created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
+        if (useSupabase) {
+            // Add fake scores to Supabase
+            try {
+                console.log('Adding fake scores to Supabase...');
+                let added = 0;
+                
+                // Add endurance records (multiple records per user are allowed)
+                for (let i = 0; i < 10; i++) {
+                    const digits = Math.floor(Math.random() * 5000) + 100;
+                    const timeMs = Math.floor(Math.random() * 300000) + 10000;
+                    // Use unique names with timestamp to avoid conflicts
+                    const name = names[i % names.length] + '_' + Date.now() + '_' + i;
+                    
+                    try {
+                        await this.game.supabase.fetch('/rest/v1/endurance_records', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                user_id: null,
+                                username: name.substring(0, 20),
+                                guest_name: name.substring(0, 20),
+                                max_digits: digits,
+                                time_ms: timeMs
+                            }),
+                            headers: { 'Prefer': 'return=minimal' }
+                        });
+                        added++;
+                    } catch (e) {
+                        // Log non-conflict errors
+                        if (e.message && !e.message.includes('Conflict')) {
+                            console.warn('Failed to add fake endurance record:', e.message);
+                        }
+                    }
+                }
+                
+                // Add speed records
+                const milestones = [10, 20, 50, 100, 200, 500];
+                for (const milestone of milestones) {
+                    for (let i = 0; i < 5; i++) {
+                        // Use unique names to avoid conflicts
+                        const name = names[i % names.length] + '_' + milestone + '_' + i;
+                        const timeMs = Math.floor((milestone * 100) + Math.random() * milestone * 50);
+                        
+                        try {
+                            await this.game.supabase.fetch('/rest/v1/speed_records', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    user_id: null,
+                                    username: name.substring(0, 20),
+                                    guest_name: name.substring(0, 20),
+                                    digit_milestone: milestone,
+                                    time_ms: timeMs
+                                }),
+                                headers: { 'Prefer': 'return=minimal' }
+                            });
+                            added++;
+                        } catch (e) {
+                            // Ignore duplicates/conflicts - record might already exist
+                            if (e.message && !e.message.includes('duplicate') && !e.message.includes('Conflict')) {
+                                console.warn('Failed to add fake speed record:', e.message);
+                            }
+                        }
+                    }
+                }
+                
+                // Reload leaderboards from Supabase
+                await this.game.loadAllLeaderboards();
+                
+                alert(`✓ Added ${added} fake scores to Supabase!\nGo to Leaderboard to see them.`);
+            } catch (error) {
+                console.error('Failed to add fake scores to Supabase:', error);
+                alert('Failed to add fake scores to Supabase. Check console for details.');
+            }
+        } else {
+            // Add to localStorage (offline mode)
+            const endurance = [];
+            for (let i = 0; i < 20; i++) {
+                endurance.push({
+                    name: names[i % names.length] + (i > 11 ? i : ''),
+                    digits: Math.floor(Math.random() * 5000) + 100,
+                    time: (Math.floor(Math.random() * 300000) + 10000) / 1000,
+                    date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
                 });
             }
-            speedData[key].sort((a, b) => a.time_ms - b.time_ms);
-        });
-        localStorage.setItem('piGame_speedLeaderboard', JSON.stringify(speedData));
+            endurance.sort((a, b) => b.digits - a.digits);
+            localStorage.setItem('piGame_enduranceLeaderboard', JSON.stringify(endurance));
+            
+            // Add speed entries (new format with all array)
+            const allSpeedRecords = [];
+            [10, 20, 50, 100, 200, 500].forEach(milestone => {
+                for (let i = 0; i < 10; i++) {
+                    allSpeedRecords.push({
+                        name: names[i % names.length],
+                        digits: milestone,
+                        time: ((milestone * 100) + Math.random() * milestone * 50) / 1000,
+                        date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
+                    });
+                }
+            });
+            allSpeedRecords.sort((a, b) => {
+                if (a.digits !== b.digits) return b.digits - a.digits;
+                return a.time - b.time;
+            });
+            
+            this.game.speedLeaderboard = { all: allSpeedRecords };
+            this.game.enduranceLeaderboard = endurance;
+            localStorage.setItem('piGame_speedLeaderboard', JSON.stringify(this.game.speedLeaderboard));
+            
+            alert('✓ Added fake leaderboard entries to localStorage!\nGo to Leaderboard to see them.');
+        }
         
-        // Reload leaderboards
-        this.game.speedLeaderboard = speedData;
-        this.game.enduranceLeaderboard = endurance;
-        
-        alert('✓ Added fake leaderboard entries!\nGo to Leaderboard to see them.');
+        // Refresh leaderboard display if it's currently shown
+        if (this.game.screens.leaderboard.classList.contains('active')) {
+            this.game.renderSpeedLeaderboard();
+            this.game.renderEnduranceLeaderboard();
+        }
     }
 }
 
