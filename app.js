@@ -803,7 +803,9 @@ class PiGame {
         
         // Reset UI
         this.elements.digitsContainer.innerHTML = '<span class="cursor blink"></span>';
-        this.elements.currentDigit.textContent = '?';
+        if (this.elements.currentDigit) {
+            this.elements.currentDigit.textContent = '?';
+        }
         this.elements.digitCounter.textContent = '0'; // Reset current counter display
         // Keep highest counter showing session highest (don't reset it)
         this.updateDigitCounterDisplay(); // Update both counters
@@ -952,11 +954,15 @@ class PiGame {
                 digitSpan.textContent = digit;
                 this.elements.digitsContainer.insertBefore(digitSpan, cursor);
                 
-                // Show correct digit hint
-                this.elements.currentDigit.textContent = expected;
-                setTimeout(() => {
-                    this.elements.currentDigit.textContent = '?';
-                }, 1000);
+                // Show correct digit hint (if element exists)
+                if (this.elements.currentDigit) {
+                    this.elements.currentDigit.textContent = expected;
+                    setTimeout(() => {
+                        if (this.elements.currentDigit) {
+                            this.elements.currentDigit.textContent = '?';
+                        }
+                    }, 1000);
+                }
                 
                 // Visual feedback
                 this.elements.digitsContainer.classList.add('flash-wrong');

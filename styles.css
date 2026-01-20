@@ -628,6 +628,12 @@ body {
     margin-bottom: 20px;
 }
 
+
+/* Reduce top margin of game controls when classic mode is active */
+.layout-classic.active ~ .game-controls {
+    margin-top: 10px;
+}
+
 .prompt {
     font-size: 14px;
     color: var(--twilight);
