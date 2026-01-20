@@ -296,7 +296,8 @@ class SupabaseClient {
         if (sessionId.startsWith('offline_') || !this.isAuthenticated()) {
             try {
                 // Submit as anonymous/guest user
-                const timeMs = scoreData.timeMs || (scoreData.time * 1000);
+                // Ensure time_ms is an integer (round to avoid floating point issues)
+                const timeMs = Math.round(scoreData.timeMs || (scoreData.time * 1000));
                 const digits = scoreData.digits;
                 
                 // Submit endurance record (most digits)
@@ -337,7 +338,7 @@ class SupabaseClient {
                                     {
                                         method: 'PATCH',
                                         body: JSON.stringify({
-                                            time_ms: timeMs
+                                            time_ms: Math.round(timeMs) // Ensure integer
                                         }),
                                         headers: { 'Prefer': 'return=minimal' }
                                     }
@@ -355,7 +356,7 @@ class SupabaseClient {
                                     username: playerName.substring(0, 20),
                                     guest_name: playerName.substring(0, 20),
                                     digit_milestone: digits, // Use actual digit count, not milestone
-                                    time_ms: timeMs
+                                    time_ms: Math.round(timeMs) // Ensure integer
                                 }),
                                 headers: { 'Prefer': 'return=minimal' }
                             });
