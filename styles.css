@@ -41,6 +41,7 @@
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation; /* Prevent double-tap zoom on buttons */
 }
 
 html {
@@ -1873,6 +1874,85 @@ body {
     50% { 
         box-shadow: 0 0 30px rgba(254, 228, 64, 0.9);
         transform: scale(1.15);
+    }
+}
+
+/* ========================================
+   Mobile Numpad
+   ======================================== */
+
+.mobile-numpad {
+    display: none; /* Hidden by default, shown on mobile */
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.mobile-numpad .numpad-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.mobile-numpad .numpad-btn {
+    flex: 1;
+    min-width: 60px;
+    height: 60px;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    border: 2px solid var(--stardust);
+    border-radius: 12px;
+    background: var(--nebula);
+    color: var(--starlight);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.mobile-numpad .numpad-btn:active,
+.mobile-numpad .numpad-btn.pressed {
+    transform: scale(0.95);
+    background: var(--stardust);
+    border-color: var(--nova);
+    box-shadow: 0 0 20px rgba(0, 245, 212, 0.4);
+}
+
+.mobile-numpad .numpad-zero {
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+/* Show numpad on mobile devices */
+@media (max-width: 768px) {
+    .mobile-numpad {
+        display: flex;
+    }
+}
+
+/* Touch-friendly buttons on mobile */
+@media (max-width: 768px) {
+    .btn, .control-btn, .footer-btn {
+        min-height: 44px; /* iOS recommended touch target */
+        padding: 12px 20px;
+    }
+    
+    .layout-btn {
+        min-height: 60px;
+        padding: 12px 16px;
+    }
+    
+    .tab {
+        min-height: 44px;
+        padding: 12px;
     }
 }
 

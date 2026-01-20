@@ -174,6 +174,7 @@ class PiGame {
                 document.getElementById('strike3')
             ],
             gameControls: document.getElementById('gameControls'),
+            mobileNumpad: document.getElementById('mobileNumpad'),
             
             // Layout displays
             layoutClassic: document.getElementById('layoutClassic'),
@@ -205,6 +206,10 @@ class PiGame {
             shop: document.getElementById('shopModal'),
             name: document.getElementById('nameModal')
         };
+        
+        // Detect mobile
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                        (window.innerWidth <= 768 && 'ontouchstart' in window);
     }
     
     initEventListeners() {
@@ -230,6 +235,41 @@ class PiGame {
                 this.quitGame();
             }
         });
+        
+        // Mobile numpad input
+        if (this.elements.mobileNumpad) {
+            const numpadButtons = this.elements.mobileNumpad.querySelectorAll('.numpad-btn');
+            numpadButtons.forEach(btn => {
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (!this.isPlaying) return;
+                    
+                    this.touchEvents++;
+                    this.isTrustedInput = true;
+                    this.lastKeySource = 'touch';
+                    
+                    const digit = btn.getAttribute('data-digit');
+                    if (digit) {
+                        // Visual feedback
+                        btn.classList.add('pressed');
+                        setTimeout(() => btn.classList.remove('pressed'), 150);
+                        
+                        this.handleDigitInput(digit);
+                    }
+                });
+                
+                // Also support click for hybrid devices
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (!this.isPlaying) return;
+                    
+                    const digit = btn.getAttribute('data-digit');
+                    if (digit) {
+                        this.handleDigitInput(digit);
+                    }
+                });
+            });
+        }
         
         // Quit and save buttons
         document.getElementById('quitBtn').addEventListener('click', () => this.quitGame());
@@ -754,6 +794,15 @@ class PiGame {
         // Show game screen
         this.showScreen('game');
         this.updateUI();
+        
+        // Show/hide mobile numpad
+        if (this.elements.mobileNumpad) {
+            if (this.isMobile) {
+                this.elements.mobileNumpad.style.display = 'flex';
+            } else {
+                this.elements.mobileNumpad.style.display = 'none';
+            }
+        }
     }
     
     handleDigitInput(digit) {
@@ -1647,6 +1696,15 @@ class PiGame {
         Object.values(this.screens).forEach(screen => {
             screen.classList.remove('active');
         });
+        
+        // Hide mobile numpad unless on game screen
+        if (this.elements.mobileNumpad) {
+            if (screenName === 'game' && this.isMobile) {
+                this.elements.mobileNumpad.style.display = 'flex';
+            } else {
+                this.elements.mobileNumpad.style.display = 'none';
+            }
+        }
         this.screens[screenName].classList.add('active');
         
         // Render leaderboards when showing that screen
