@@ -57,6 +57,19 @@ class PiGame {
             this.supabase = new SupabaseClient();
         }
         
+        // Initialize Ad Manager (after DOM is ready)
+        this.adManager = null;
+        if (typeof AdManager !== 'undefined') {
+            // Wait for DOM to be fully ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    this.adManager = new AdManager();
+                });
+            } else {
+                this.adManager = new AdManager();
+            }
+        }
+        
         // Leaderboards (will be loaded asynchronously from Supabase if available)
         this.speedLeaderboard = { all: [] };
         this.enduranceLeaderboard = [];
@@ -1567,15 +1580,63 @@ class PiGame {
         this.closeShop();
     }
     
-    watchAd() {
-        // Simulate watching an ad
-        alert('📺 Watching ad...\n\nIn production, this would show a real ad from AdMob, Unity Ads, or similar.');
+    async watchAd() {
+        if (!this.adManager) {
+            // Fallback if ad manager not loaded
+            alert('📺 Ad system not available');
+            return;
+        }
         
-        // Give 5 lives after "watching"
-        setTimeout(() => {
-            this.addLives(5);
-            alert('You earned +5 lives! ❤️❤️❤️❤️❤️');
-        }, 500);
+        try {
+            // Load rewarded ad if not already loaded
+            if (!this.adManager.rewardedAd) {
+                const loaded = await this.adManager.loadRewardedAd();
+                if (!loaded) {
+                    // Use placeholder if ad failed to load
+                    console.log('Using placeholder ad');
+                }
+            }
+            
+            // Show the rewarded ad
+            const result = await this.adManager.showRewardedAd();
+            
+            if (result.success) {
+                // Reward the player
+                const livesEarned = result.reward?.lives || 5;
+                this.addLives(livesEarned);
+                
+                // Show success message
+                const message = document.createElement('div');
+                message.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(0, 0, 0, 0.95);
+                    border: 2px solid #00f5d4;
+                    border-radius: 12px;
+                    padding: 30px;
+                    z-index: 10001;
+                    text-align: center;
+                    color: #00f5d4;
+                    font-family: Arial, sans-serif;
+                `;
+                message.innerHTML = `
+                    <h2 style="margin: 0 0 15px 0;">🎉 Reward Earned!</h2>
+                    <p style="font-size: 24px; margin: 0;">+${livesEarned} Lives ❤️</p>
+                `;
+                document.body.appendChild(message);
+                
+                setTimeout(() => {
+                    message.remove();
+                }, 2000);
+            } else {
+                console.log('Ad was closed without reward');
+            }
+        } catch (error) {
+            console.error('Error showing ad:', error);
+            alert('Failed to show ad. Please try again.');
+        }
     }
     
     // ========================================
