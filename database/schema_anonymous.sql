@@ -53,6 +53,13 @@ CREATE POLICY "Anyone can insert endurance records"
     ON public.endurance_records FOR INSERT 
     WITH CHECK (true);
 
+-- Allow anonymous users to update endurance records (for UPSERT logic)
+DROP POLICY IF EXISTS "Users can update own endurance records" ON public.endurance_records;
+DROP POLICY IF EXISTS "Anyone can update endurance records" ON public.endurance_records;
+CREATE POLICY "Anyone can update endurance records" 
+    ON public.endurance_records FOR UPDATE 
+    USING (true);
+
 -- Update views to include guest names
 DROP VIEW IF EXISTS public.leaderboard_endurance;
 CREATE OR REPLACE VIEW public.leaderboard_endurance AS

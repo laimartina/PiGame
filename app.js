@@ -1242,13 +1242,41 @@ class PiGame {
                 // Load endurance leaderboard from Supabase
                 const enduranceData = await this.supabase.getEnduranceLeaderboard(200);
                 console.log(`Loaded ${enduranceData.length} endurance records from Supabase`);
-                this.enduranceLeaderboard = enduranceData.map(record => ({
-                    name: record.username || record.name,
+                // #region agent log
+                // Group by user/guest to see duplicates
+                const grouped = {};
+                enduranceData.forEach(r => {
+                    const key = r.user_id || r.guest_name || 'unknown';
+                    if (!grouped[key]) grouped[key] = [];
+                    grouped[key].push({id: r.id, digits: r.max_digits || r.digits, created_at: r.created_at});
+                });
+                fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:1245',message:'Raw endurance data from Supabase with duplicates',data:{totalRecords:enduranceData.length,groupedByUser:Object.keys(grouped).map(k=>({key:k,count:grouped[k].length,records:grouped[k]})),allRecords:enduranceData.map(r=>({id:r.id,user_id:r.user_id,guest_name:r.guest_name,username:r.username,digits:r.max_digits||r.digits}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'V'})}).catch(()=>{});
+                // #endregion
+                
+                // Deduplicate: Keep only the best record per user/guest
+                const seen = new Map(); // key: user_id or guest_name, value: best record
+                enduranceData.forEach(record => {
+                    const key = record.user_id || record.guest_name || 'unknown';
+                    const existing = seen.get(key);
+                    const digits = record.max_digits || record.digits || 0;
+                    
+                    if (!existing || digits > (existing.max_digits || existing.digits || 0)) {
+                        seen.set(key, record);
+                    }
+                });
+                
+                const deduplicated = Array.from(seen.values());
+                // #region agent log
+                fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:1255',message:'Deduplicated endurance data',data:{originalCount:enduranceData.length,deduplicatedCount:deduplicated.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'T'})}).catch(()=>{});
+                // #endregion
+                
+                this.enduranceLeaderboard = deduplicated.map(record => ({
+                    name: record.username || record.name || record.guest_name,
                     digits: record.max_digits || record.digits,
                     time: (record.time_ms || record.time) / 1000,
                     date: record.created_at || record.date
-                }));
-                console.log(`✓ Processed ${this.enduranceLeaderboard.length} endurance records`);
+                })).sort((a, b) => b.digits - a.digits); // Sort by digits descending
+                console.log(`✓ Processed ${this.enduranceLeaderboard.length} endurance records (deduplicated from ${enduranceData.length})`);
                 
                 // Load speed leaderboard from Supabase (all records, not just milestones)
                 // Get all speed records, ordered by digit count

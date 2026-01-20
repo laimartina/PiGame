@@ -76,24 +76,55 @@ class DevMode {
         
         this.debugPanel = document.createElement('div');
         this.debugPanel.id = 'devPanel';
+        this.debugPanelCollapsed = false;
         this.debugPanel.innerHTML = `
             <style>
                 #devPanel {
                     position: fixed;
-                    bottom: 70px;
-                    left: 10px;
-                    right: 10px;
-                    max-width: 480px;
-                    margin: 0 auto;
+                    top: 80px;
+                    right: 0;
+                    width: 300px;
+                    max-height: calc(100vh - 100px);
                     background: rgba(0, 0, 0, 0.95);
                     border: 2px solid #00f5d4;
-                    border-radius: 12px;
+                    border-right: none;
+                    border-radius: 12px 0 0 12px;
                     padding: 15px;
                     font-family: 'JetBrains Mono', monospace;
                     font-size: 12px;
                     color: #fff;
                     z-index: 9999;
-                    box-shadow: 0 0 30px rgba(0, 245, 212, 0.3);
+                    box-shadow: -4px 0 30px rgba(0, 245, 212, 0.3);
+                    transition: transform 0.3s ease;
+                    overflow-y: auto;
+                }
+                #devPanel.collapsed {
+                    transform: translateX(calc(100% - 50px));
+                }
+                #devPanel .dev-toggle {
+                    position: absolute;
+                    left: -30px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 30px;
+                    height: 60px;
+                    background: rgba(0, 0, 0, 0.95);
+                    border: 2px solid #00f5d4;
+                    border-right: none;
+                    border-radius: 8px 0 0 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    color: #00f5d4;
+                    font-size: 18px;
+                    transition: all 0.2s;
+                }
+                #devPanel .dev-toggle:hover {
+                    background: rgba(0, 245, 212, 0.1);
+                }
+                #devPanel.collapsed .dev-toggle {
+                    border-radius: 8px 0 0 8px;
                 }
                 #devPanel h3 {
                     margin: 0 0 10px 0;
@@ -126,7 +157,7 @@ class DevMode {
                 }
                 #devPanel .dev-controls {
                     display: flex;
-                    flex-wrap: wrap;
+                    flex-direction: column;
                     gap: 8px;
                     margin-top: 10px;
                 }
@@ -140,6 +171,8 @@ class DevMode {
                     color: #fff;
                     cursor: pointer;
                     transition: all 0.2s;
+                    width: 100%;
+                    text-align: left;
                 }
                 #devPanel button:hover {
                     background: #2d2d5a;
@@ -150,6 +183,14 @@ class DevMode {
                     color: #000;
                     border-color: #00f5d4;
                 }
+                #devPanel button.danger {
+                    background: #5a1a1a;
+                    border-color: #ff5757;
+                }
+                #devPanel button.danger:hover {
+                    background: #7a2a2a;
+                    border-color: #ff7777;
+                }
                 #devPanel input[type="range"] {
                     width: 100%;
                     margin: 10px 0;
@@ -159,7 +200,13 @@ class DevMode {
                     color: #00f5d4;
                     margin-bottom: 5px;
                 }
+                @media (max-width: 768px) {
+                    #devPanel {
+                        width: 250px;
+                    }
+                }
             </style>
+            <div class="dev-toggle" id="devToggle">◀</div>
             <h3>
                 🔧 Dev Mode
                 <span class="dev-badge">TESTING</span>
@@ -192,12 +239,30 @@ class DevMode {
                 <button id="devReset">🔄 Reset</button>
                 <button id="devFakeScore">📊 Add Fake Scores</button>
                 <button id="devClearData">🗑 Clear All Data</button>
+                <button id="devClearLeaderboard" class="danger">🗑 Clear Leaderboard (Password)</button>
             </div>
         `;
         
         document.body.appendChild(this.debugPanel);
         this.bindDebugEvents();
         this.startDebugUpdate();
+        
+        // Toggle panel collapse
+        const toggleBtn = document.getElementById('devToggle');
+        toggleBtn.addEventListener('click', () => {
+            this.togglePanel();
+        });
+    }
+    
+    togglePanel() {
+        this.debugPanelCollapsed = !this.debugPanelCollapsed;
+        if (this.debugPanelCollapsed) {
+            this.debugPanel.classList.add('collapsed');
+            document.getElementById('devToggle').textContent = '▶';
+        } else {
+            this.debugPanel.classList.remove('collapsed');
+            document.getElementById('devToggle').textContent = '◀';
+        }
     }
     
     bindDebugEvents() {
@@ -247,6 +312,14 @@ class DevMode {
                 location.reload();
             }
         });
+        
+        // Clear leaderboards button with password
+        const clearLeaderboardBtn = document.getElementById('devClearLeaderboard');
+        if (clearLeaderboardBtn) {
+            clearLeaderboardBtn.addEventListener('click', () => {
+                this.promptClearLeaderboards();
+            });
+        }
         
         // Keyboard shortcuts during dev mode
         document.addEventListener('keydown', (e) => {
@@ -592,6 +665,198 @@ class DevMode {
         if (this.game.screens.leaderboard.classList.contains('active')) {
             this.game.renderSpeedLeaderboard();
             this.game.renderEnduranceLeaderboard();
+        }
+    }
+    
+    promptClearLeaderboards() {
+        // Password protection
+        const password = prompt('Enter password to clear leaderboards:');
+        if (!password) {
+            return; // User cancelled
+        }
+        
+        // Default password is "dev123" - change this to your preferred password
+        const correctPassword = 'pidev123';
+        
+        if (password !== correctPassword) {
+            alert('❌ Incorrect password. Leaderboard data was NOT cleared.');
+            return;
+        }
+        
+        // Password correct, proceed with clearing
+        this.clearLeaderboards();
+    }
+    
+    clearLeaderboards() {
+        if (!confirm('Clear all leaderboard data?\n\nThis will clear:\n- localStorage leaderboards\n- Supabase data (if configured)\n\nContinue?')) {
+            return;
+        }
+        
+        // Clear localStorage leaderboards
+        localStorage.removeItem('piGame_enduranceLeaderboard');
+        localStorage.removeItem('piGame_speedLeaderboard');
+        localStorage.removeItem('piGame_trainingSpeedLeaderboard');
+        localStorage.removeItem('piGame_trainingEnduranceLeaderboard');
+        
+        // Clear game's in-memory leaderboards
+        this.game.enduranceLeaderboard = [];
+        this.game.speedLeaderboard = { all: [] };
+        this.game.trainingSpeedLeaderboard = { all: [] };
+        this.game.trainingEnduranceLeaderboard = [];
+        
+        console.log('✓ Cleared localStorage leaderboards');
+        
+        // Clear Supabase data if configured
+        if (this.game.supabase && this.game.supabase.isConfigured) {
+            if (confirm('Clear Supabase database leaderboards?\n\n⚠️ This will delete ALL records for ALL users globally!\n\nContinue?')) {
+                this.clearSupabaseLeaderboards();
+            } else {
+                alert('✓ Cleared localStorage leaderboards.\n\nSupabase data was NOT cleared.\n\nTo clear Supabase, run SQL commands in Supabase SQL Editor:\n\nDELETE FROM public.endurance_records;\nDELETE FROM public.speed_records;');
+                if (this.game.screens.leaderboard.classList.contains('active')) {
+                    this.game.renderSpeedLeaderboard();
+                    this.game.renderEnduranceLeaderboard();
+                }
+                location.reload();
+            }
+        } else {
+            alert('✓ Cleared localStorage leaderboards!\n\nReloading page...');
+            if (this.game.screens.leaderboard.classList.contains('active')) {
+                this.game.renderSpeedLeaderboard();
+                this.game.renderEnduranceLeaderboard();
+            }
+            location.reload();
+        }
+    }
+    
+    async clearSupabaseLeaderboards() {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:731',message:'clearSupabaseLeaderboards called',data:{supabaseConfigured:this.game.supabase?.isConfigured,hasAccessToken:!!this.game.supabase?.accessToken,url:this.game.supabase?.url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        try {
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:735',message:'Attempting DELETE endurance_records',data:{endpoint:'/rest/v1/endurance_records',method:'DELETE'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
+            // First, get counts before deletion
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:739',message:'Getting record counts before deletion',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'G'})}).catch(()=>{});
+            // #endregion
+            const beforeEndurance = await this.game.supabase.fetch('/rest/v1/endurance_records?select=id&limit=1', { method: 'GET' });
+            const beforeSpeed = await this.game.supabase.fetch('/rest/v1/speed_records?select=id&limit=1', { method: 'GET' });
+            
+            // Clear endurance records - Supabase requires a WHERE clause, so we use a filter that matches all records
+            // Using id=not.is.null matches all records (since id is always not null for existing records)
+            // Use return=representation to get deleted rows back, or count via Content-Range header
+            const enduranceResponseRaw = await fetch(`${this.game.supabase.url}/rest/v1/endurance_records?id=not.is.null`, {
+                method: 'DELETE',
+                headers: { 
+                    'apikey': this.game.supabase.key,
+                    'Prefer': 'return=representation',
+                    'Content-Type': 'application/json'
+                }
+            });
+            // #region agent log
+            const enduranceContentRange = enduranceResponseRaw.headers.get('Content-Range');
+            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:744',message:'DELETE endurance raw response',data:{status:enduranceResponseRaw.status,contentRange:enduranceContentRange},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'M'})}).catch(()=>{});
+            // #endregion
+            const enduranceText = await enduranceResponseRaw.text();
+            const enduranceResponse = enduranceText ? JSON.parse(enduranceText) : [];
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:752',message:'DELETE endurance parsed response',data:{status:enduranceResponseRaw.status,contentRange:enduranceContentRange,responseLength:Array.isArray(enduranceResponse) ? enduranceResponse.length : 'not-array',responseType:typeof enduranceResponse},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'O'})}).catch(()=>{});
+            // #endregion
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:747',message:'DELETE endurance_records response',data:{response:JSON.stringify(enduranceResponse),responseType:typeof enduranceResponse,responseKeys:enduranceResponse ? Object.keys(enduranceResponse) : 'null'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'H'})}).catch(()=>{});
+            // #endregion
+            
+            // Clear speed records - Supabase requires a WHERE clause, so we use a filter that matches all records
+            const speedResponseRaw = await fetch(`${this.game.supabase.url}/rest/v1/speed_records?id=not.is.null`, {
+                method: 'DELETE',
+                headers: { 
+                    'apikey': this.game.supabase.key,
+                    'Prefer': 'return=representation',
+                    'Content-Type': 'application/json'
+                }
+            });
+            // #region agent log
+            const speedContentRange = speedResponseRaw.headers.get('Content-Range');
+            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:756',message:'DELETE speed raw response',data:{status:speedResponseRaw.status,contentRange:speedContentRange},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'N'})}).catch(()=>{});
+            // #endregion
+            const speedText = await speedResponseRaw.text();
+            const speedResponse = speedText ? JSON.parse(speedText) : [];
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:764',message:'DELETE speed parsed response',data:{status:speedResponseRaw.status,contentRange:speedContentRange,responseLength:Array.isArray(speedResponse) ? speedResponse.length : 'not-array',responseType:typeof speedResponse},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'P'})}).catch(()=>{});
+            // #endregion
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:755',message:'DELETE speed_records response',data:{response:JSON.stringify(speedResponse),responseType:typeof speedResponse,responseKeys:speedResponse ? Object.keys(speedResponse) : 'null'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'I'})}).catch(()=>{});
+            // #endregion
+            
+            // Check counts after deletion
+            const afterEndurance = await this.game.supabase.fetch('/rest/v1/endurance_records?select=id&limit=1', { method: 'GET' });
+            const afterSpeed = await this.game.supabase.fetch('/rest/v1/speed_records?select=id&limit=1', { method: 'GET' });
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:761',message:'Record counts after deletion',data:{beforeEndurance:beforeEndurance?.length||0,beforeSpeed:beforeSpeed?.length||0,afterEndurance:afterEndurance?.length||0,afterSpeed:afterSpeed?.length||0,enduranceDeleted:Array.isArray(enduranceResponse) ? enduranceResponse.length : 'unknown',speedDeleted:Array.isArray(speedResponse) ? speedResponse.length : 'unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'J'})}).catch(()=>{});
+            // #endregion
+            
+            const enduranceCount = Array.isArray(enduranceResponse) ? enduranceResponse.length : 0;
+            const speedCount = Array.isArray(speedResponse) ? speedResponse.length : 0;
+            
+            if (enduranceCount === 0 && speedCount === 0) {
+                console.warn('⚠️ DELETE returned 0 rows - records may not have been deleted');
+                // #region agent log
+                fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:776',message:'WARNING: No rows deleted',data:{enduranceCount,speedCount},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'K'})}).catch(()=>{});
+                // #endregion
+                alert('⚠️ WARNING: DELETE operation returned 0 rows deleted!\n\nThis means Row Level Security (RLS) policies are blocking deletion.\n\nTo fix this:\n1. Go to Supabase SQL Editor\n2. Run the migration file: database/allow_delete_policies.sql\n\nOr manually run:\n\nDROP POLICY IF EXISTS "Anyone can delete speed records" ON public.speed_records;\nCREATE POLICY "Anyone can delete speed records" \n    ON public.speed_records FOR DELETE \n    USING (true);\n\nDROP POLICY IF EXISTS "Anyone can delete endurance records" ON public.endurance_records;\nCREATE POLICY "Anyone can delete endurance records" \n    ON public.endurance_records FOR DELETE \n    USING (true);\n\nlocalStorage was cleared successfully.');
+            } else {
+                console.log(`✓ Cleared ${enduranceCount} endurance_records and ${speedCount} speed_records from Supabase`);
+                alert(`✓ Cleared ALL leaderboard data!\n\n- localStorage cleared\n- Supabase: ${enduranceCount} endurance + ${speedCount} speed records deleted\n\nReloading page...`);
+            }
+            
+            // Reload leaderboards
+            await this.game.loadAllLeaderboards();
+            
+            if (this.game.screens.leaderboard.classList.contains('active')) {
+                this.game.renderSpeedLeaderboard();
+                this.game.renderEnduranceLeaderboard();
+            }
+            
+            location.reload();
+        } catch (error) {
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:767',message:'DELETE failed with error',data:{errorMessage:error.message,errorStatus:error.status,errorStatusText:error.statusText,errorStack:error.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            console.error('Failed to clear Supabase leaderboards:', error);
+            
+            // Check if it's an RLS/permissions error
+            const isRLSError = error.status === 403 || 
+                              error.message?.toLowerCase().includes('permission') ||
+                              error.message?.toLowerCase().includes('policy') ||
+                              error.message?.toLowerCase().includes('row level security');
+            
+            let errorMsg = '❌ Failed to clear Supabase data.\n\n';
+            errorMsg += 'Error: ' + error.message + '\n\n';
+            
+            if (isRLSError) {
+                errorMsg += '⚠️ This is likely a Row Level Security (RLS) policy issue.\n\n';
+                errorMsg += 'To fix this, run the following SQL in Supabase SQL Editor:\n\n';
+                errorMsg += 'DELETE FROM public.endurance_records WHERE id IS NOT NULL;\n';
+                errorMsg += 'DELETE FROM public.speed_records WHERE id IS NOT NULL;\n\n';
+                errorMsg += 'Or run the migration file:\n';
+                errorMsg += 'database/allow_delete_policies.sql\n\n';
+            } else if (error.message?.includes('WHERE clause')) {
+                errorMsg += '⚠️ Supabase requires a WHERE clause on DELETE operations.\n\n';
+                errorMsg += 'The code has been updated to include WHERE clauses.\n';
+                errorMsg += 'If you still see this error, try manually in SQL Editor:\n\n';
+                errorMsg += 'DELETE FROM public.endurance_records WHERE id IS NOT NULL;\n';
+                errorMsg += 'DELETE FROM public.speed_records WHERE id IS NOT NULL;\n\n';
+            } else {
+                errorMsg += 'You may need to clear it manually via SQL Editor:\n\n';
+                errorMsg += 'DELETE FROM public.endurance_records WHERE id IS NOT NULL;\n';
+                errorMsg += 'DELETE FROM public.speed_records WHERE id IS NOT NULL;\n\n';
+            }
+            
+            errorMsg += 'localStorage was cleared successfully.';
+            
+            alert(errorMsg);
+            location.reload();
         }
     }
 }
