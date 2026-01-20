@@ -815,33 +815,44 @@ body {
    ======================================== */
 
 #leaderboardScreen {
-    padding: 20px;
-    padding-bottom: 160px; /* Extra space for footer + ad */
+    padding: 0 20px !important; /* No vertical padding to maximize list space */
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ensure full height */
+    min-height: 100%; /* Ensure minimum height */
 }
 
 .leaderboard-header {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
+    gap: 10px; /* Good gap size */
+    margin: 0; /* No margins to maximize list space */
+    padding: 0; /* No padding to maximize list space */
+    flex-shrink: 0; /* Don't shrink header */
+    min-height: 0; /* Allow to be as small as content */
 }
 
 .leaderboard-header h2 {
     font-family: var(--font-display);
-    font-size: 24px;
+    font-size: 20px; /* Restored to good size */
     font-weight: 700;
+    line-height: 1.2; /* Normal line height */
+    margin: 0; /* Remove any default margins */
+    padding: 0; /* Remove any padding */
 }
 
 .back-btn {
-    width: 40px;
-    height: 40px;
+    width: 32px; /* Restored to good size */
+    height: 32px; /* Restored to good size */
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     background: var(--nebula);
     color: var(--moonlight);
-    font-size: 20px;
+    font-size: 16px; /* Restored to good size */
     cursor: pointer;
     transition: all 0.2s;
+    padding: 0; /* Remove any padding */
+    margin: 0; /* Remove any margins */
 }
 
 .back-btn:hover {
@@ -850,15 +861,19 @@ body {
 
 .leaderboard-tabs {
     display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 8px; /* Good gap size */
+    margin: 0; /* No margins to maximize list space */
+    padding: 0; /* No padding to maximize list space */
+    flex-shrink: 0; /* Don't shrink tabs */
+    min-height: 0; /* Allow to be as small as content */
 }
 
 .tab {
     flex: 1;
-    padding: 12px;
+    padding: 8px; /* Restored to good size */
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: 12px; /* Restored to good size */
+    line-height: 1.2; /* Normal line height */
     border: none;
     border-radius: 8px;
     background: var(--nebula);
@@ -885,12 +900,19 @@ body {
 .leaderboard-content {
     flex: 1;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Allow flex item to shrink */
+    height: 100%; /* Use full available height */
 }
 
 .leaderboard-panel {
     display: none;
     flex-direction: column;
-    height: 100%;
+    flex: 1; /* Fill available content space */
+    min-height: 0; /* Allow flex item to shrink */
+    overflow: hidden;
+    height: 100%; /* Use full content height */
 }
 
 .leaderboard-panel.active {
@@ -944,19 +966,24 @@ body {
 .speed-filter {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 8px; /* Good gap size */
+    margin: 0; /* No margins to maximize list space */
+    padding: 0; /* No padding to maximize list space */
+    flex-shrink: 0; /* Don't shrink filter */
+    min-height: 0; /* Allow to be as small as content */
 }
 
 .speed-filter label {
     color: var(--twilight);
-    font-size: 14px;
+    font-size: 12px; /* Restored to good size */
+    line-height: 1.2; /* Normal line height */
 }
 
 .speed-filter select {
-    padding: 8px 12px;
+    padding: 6px 10px; /* Restored to good size */
     font-family: var(--font-mono);
-    font-size: 14px;
+    font-size: 12px; /* Restored to good size */
+    line-height: 1.2; /* Normal line height */
     background: var(--nebula);
     color: var(--starlight);
     border: 1px solid var(--stardust);
@@ -967,6 +994,8 @@ body {
 .leaderboard-list {
     flex: 1;
     overflow-y: auto;
+    min-height: 0; /* Allow flex item to shrink */
+    height: 100%; /* Use full panel height */
 }
 
 .speed-group-header {
@@ -986,11 +1015,11 @@ body {
 .leaderboard-entry {
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 12px 15px;
+    gap: 8px; /* Even smaller gap to maximize space */
+    padding: 6px 10px; /* Even smaller padding to maximize space */
     background: rgba(0, 0, 0, 0.2);
-    border-radius: 10px;
-    margin-bottom: 8px;
+    border-radius: 6px; /* Smaller radius */
+    margin-bottom: 3px; /* Even smaller margin to fit more entries */
     transition: all 0.2s;
 }
 
@@ -1005,9 +1034,9 @@ body {
 
 .entry-rank {
     font-family: var(--font-display);
-    font-size: 18px;
+    font-size: 16px; /* Reduced font size to save space */
     font-weight: 700;
-    width: 35px;
+    width: 30px; /* Reduced width to save space */
     text-align: center;
 }
 
@@ -1025,23 +1054,26 @@ body {
 .entry-name {
     font-weight: 700;
     color: var(--starlight);
+    font-size: 14px; /* Slightly reduced font size */
+    line-height: 1.3; /* Tighter line height */
 }
 
 .entry-date {
-    font-size: 11px;
+    font-size: 10px; /* Slightly reduced font size */
     color: var(--twilight);
+    line-height: 1.2; /* Tighter line height */
 }
 
 .entry-score {
     font-family: var(--font-display);
-    font-size: 18px;
+    font-size: 16px; /* Reduced font size to save space */
     font-weight: 700;
     color: var(--nova);
 }
 
 .entry-time {
     font-family: var(--font-display);
-    font-size: 16px;
+    font-size: 14px; /* Reduced font size to save space */
     font-weight: 700;
     color: var(--supernova);
 }
@@ -1438,7 +1470,7 @@ body {
     }
     
     #leaderboardScreen {
-        padding-bottom: 140px;
+        padding-bottom: 0 !important; /* Remove padding to allow list to extend to bottom */
     }
     
     .title {
@@ -1501,7 +1533,7 @@ body {
     }
     
     #leaderboardScreen {
-        padding-bottom: 120px;
+        padding-bottom: 0 !important; /* Remove padding to allow list to extend to bottom */
     }
     
     .title {
