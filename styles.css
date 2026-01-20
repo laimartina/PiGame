@@ -1986,9 +1986,71 @@ body {
         padding: 12px 16px;
     }
     
+    /* Make reveal mode more compact on mobile to fit numpad */
+    .layout-reveal .reveal-header {
+        margin-bottom: 10px;
+    }
+    
+    .layout-reveal .reveal-grid {
+        margin-bottom: 15px;
+        padding: 10px;
+    }
+    
+    .layout-reveal .reveal-input-area {
+        margin-bottom: 10px;
+    }
+    
+    .layout-reveal .game-controls {
+        margin: 15px auto 15px;
+    }
+    
+    .layout-reveal .mobile-numpad {
+        margin-top: 10px;
+        padding: 15px;
+    }
+    
+    #gameScreen {
+        padding-bottom: 60px; /* Extra space for numpad on mobile */
+    }
+    
     .tab {
         min-height: 44px;
         padding: 12px;
+    }
+    
+    /* Allow scrolling on mobile game screen if content is too tall */
+    #gameScreen {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    }
+}
+
+/* Extra compact spacing for very small screens in reveal mode */
+@media (max-width: 768px) and (max-height: 700px) {
+    .layout-reveal .reveal-header {
+        margin-bottom: 8px;
+    }
+    
+    .layout-reveal .reveal-grid {
+        margin-bottom: 10px;
+        padding: 8px;
+    }
+    
+    .layout-reveal .reveal-input-area {
+        margin-bottom: 8px;
+    }
+    
+    .layout-reveal .game-controls {
+        margin: 10px auto 10px;
+    }
+    
+    .layout-reveal .mobile-numpad {
+        margin-top: 8px;
+        padding: 12px;
+    }
+    
+    #gameScreen {
+        padding-bottom: 80px; /* Even more space for numpad on very small screens */
     }
 }
 
