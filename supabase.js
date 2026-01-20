@@ -60,9 +60,6 @@ class SupabaseClient {
     // =============================================
     
     async fetch(endpoint, options = {}) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:62',message:'fetch called',data:{endpoint,method:options.method||'GET',hasAccessToken:!!this.accessToken,url:this.url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         const headers = {
             'apikey': this.key,
             'Content-Type': 'application/json',
@@ -73,19 +70,10 @@ class SupabaseClient {
             headers['Authorization'] = `Bearer ${this.accessToken}`;
         }
         
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:73',message:'Making fetch request',data:{fullUrl:`${this.url}${endpoint}`,method:options.method||'GET',hasAuth:!!headers.Authorization},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         const response = await fetch(`${this.url}${endpoint}`, {
             ...options,
             headers
         });
-        
-        // #region agent log
-        const contentRange = response.headers.get('Content-Range');
-        const rangeHeader = response.headers.get('Range');
-        fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:78',message:'Response received',data:{status:response.status,statusText:response.statusText,ok:response.ok,contentRange,rangeHeader},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'L'})}).catch(()=>{});
-        // #endregion
         
         if (!response.ok) {
             let errorMessage = 'Request failed';
@@ -93,9 +81,6 @@ class SupabaseClient {
             try {
                 const text = await response.text();
                 errorText = text;
-                // #region agent log
-                fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:85',message:'Error response text',data:{status:response.status,statusText:response.statusText,errorText:text.substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-                // #endregion
                 if (text) {
                     const error = JSON.parse(text);
                     errorMessage = error.message || error.error_description || error.hint || JSON.stringify(error);
@@ -108,9 +93,6 @@ class SupabaseClient {
             const fullError = new Error(errorMessage);
             fullError.status = response.status;
             fullError.statusText = response.statusText;
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:95',message:'Throwing error',data:{errorMessage,status:response.status,statusText:response.statusText},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-            // #endregion
             throw fullError;
         }
         
@@ -327,23 +309,14 @@ class SupabaseClient {
                         `/rest/v1/endurance_records?guest_name=eq.${encodeURIComponent(playerName.substring(0, 20))}&user_id=is.null`,
                         { method: 'GET' }
                     );
-                    // #region agent log
-                    fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:328',message:'Checking existing endurance record',data:{playerName:playerName.substring(0,20),digits,existingCount:Array.isArray(existing)?existing.length:0,existingRecords:Array.isArray(existing)?existing.map(r=>({id:r.id,digits:r.max_digits,time:r.time_ms})):[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run5',hypothesisId:'W'})}).catch(()=>{});
-                    // #endregion
                     
                     if (existing && existing.length > 0) {
                         // Record exists - update if new score is better (more digits)
                         const existingRecord = existing[0];
                         const existingDigits = existingRecord.max_digits || 0;
-                        // #region agent log
-                        fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:336',message:'Found existing record, comparing',data:{existingDigits,newDigits:digits,comparison:digits>existingDigits,existingRecordId:existingRecord.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'AB'})}).catch(()=>{});
-                        // #endregion
                         
                         if (digits > existingDigits) {
                             // New score is better - update the record
-                            // #region agent log
-                            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:342',message:'Attempting to update record',data:{recordId:existingRecord.id,oldDigits:existingDigits,newDigits:digits,updateUrl:`/rest/v1/endurance_records?id=eq.${existingRecord.id}`},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'AC'})}).catch(()=>{});
-                            // #endregion
                             const updateResponse = await this.fetch(
                                 `/rest/v1/endurance_records?id=eq.${existingRecord.id}`,
                                 {
@@ -355,19 +328,10 @@ class SupabaseClient {
                                     headers: { 'Prefer': 'return=minimal' }
                                 }
                             );
-                            // #region agent log
-                            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:355',message:'Update response received',data:{updateResponse:JSON.stringify(updateResponse),recordId:existingRecord.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'AD'})}).catch(()=>{});
-                            // #endregion
                             console.log(`✓ Updated endurance record: ${digits} digits (was ${existingDigits}) in ${(timeMs/1000).toFixed(2)}s`);
-                            // #region agent log
-                            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:360',message:'Successfully updated endurance record',data:{recordId:existingRecord.id,oldDigits:existingDigits,newDigits:digits},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'X'})}).catch(()=>{});
-                            // #endregion
                         } else {
                             // New score is not better - don't update
                             console.log(`Endurance record already has better score (${existingDigits} digits, current: ${digits})`);
-                            // #region agent log
-                            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:366',message:'Skipped update - existing record is better',data:{existingDigits,newDigits:digits,reason:'newDigits <= existingDigits'},timestamp:Date.now(),sessionId:'debug-session',runId:'run6',hypothesisId:'Y'})}).catch(()=>{});
-                            // #endregion
                         }
                     } else {
                         // No existing record - insert new one
@@ -383,15 +347,9 @@ class SupabaseClient {
                             headers: { 'Prefer': 'return=minimal' }
                         });
                         console.log(`✓ Endurance record saved: ${digits} digits in ${(timeMs/1000).toFixed(2)}s`);
-                        // #region agent log
-                        fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:375',message:'Inserted new endurance record',data:{playerName:playerName.substring(0,20),digits},timestamp:Date.now(),sessionId:'debug-session',runId:'run5',hypothesisId:'Z'})}).catch(()=>{});
-                        // #endregion
                     }
                 } catch (error) {
                     console.error('Failed to save endurance record:', error.message);
-                    // #region agent log
-                    fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:381',message:'Failed to save endurance record',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run5',hypothesisId:'AA'})}).catch(()=>{});
-                    // #endregion
                     throw error; // Re-throw so caller knows it failed
                 }
                 
@@ -519,9 +477,6 @@ class SupabaseClient {
             const data = await this.fetch(
                 `/rest/v1/endurance_records?select=*&order=max_digits.desc,time_ms.asc&limit=${limit}`
             );
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.js:461',message:'Raw endurance records from DB',data:{totalRecords:Array.isArray(data)?data.length:0,records:Array.isArray(data)?data.map(r=>({id:r.id,user_id:r.user_id,guest_name:r.guest_name,username:r.username,max_digits:r.max_digits,created_at:r.created_at})):[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'U'})}).catch(()=>{});
-            // #endregion
             return data || [];
         } catch (error) {
             console.error('Failed to fetch endurance leaderboard:', error);

@@ -1713,8 +1713,8 @@ body {
     padding: 15px;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 12px;
-    max-height: 200px;
-    overflow-y: auto;
+    height: 130px; /* Fixed height to show exactly 3 rows */
+    overflow: hidden; /* Hide overflow since we only show 3 rows */
 }
 
 .reveal-cell {

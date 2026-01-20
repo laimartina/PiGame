@@ -729,17 +729,7 @@ class DevMode {
     }
     
     async clearSupabaseLeaderboards() {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:731',message:'clearSupabaseLeaderboards called',data:{supabaseConfigured:this.game.supabase?.isConfigured,hasAccessToken:!!this.game.supabase?.accessToken,url:this.game.supabase?.url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         try {
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:735',message:'Attempting DELETE endurance_records',data:{endpoint:'/rest/v1/endurance_records',method:'DELETE'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-            // #endregion
-            // First, get counts before deletion
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:739',message:'Getting record counts before deletion',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'G'})}).catch(()=>{});
-            // #endregion
             const beforeEndurance = await this.game.supabase.fetch('/rest/v1/endurance_records?select=id&limit=1', { method: 'GET' });
             const beforeSpeed = await this.game.supabase.fetch('/rest/v1/speed_records?select=id&limit=1', { method: 'GET' });
             
@@ -754,18 +744,8 @@ class DevMode {
                     'Content-Type': 'application/json'
                 }
             });
-            // #region agent log
-            const enduranceContentRange = enduranceResponseRaw.headers.get('Content-Range');
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:744',message:'DELETE endurance raw response',data:{status:enduranceResponseRaw.status,contentRange:enduranceContentRange},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'M'})}).catch(()=>{});
-            // #endregion
             const enduranceText = await enduranceResponseRaw.text();
             const enduranceResponse = enduranceText ? JSON.parse(enduranceText) : [];
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:752',message:'DELETE endurance parsed response',data:{status:enduranceResponseRaw.status,contentRange:enduranceContentRange,responseLength:Array.isArray(enduranceResponse) ? enduranceResponse.length : 'not-array',responseType:typeof enduranceResponse},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'O'})}).catch(()=>{});
-            // #endregion
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:747',message:'DELETE endurance_records response',data:{response:JSON.stringify(enduranceResponse),responseType:typeof enduranceResponse,responseKeys:enduranceResponse ? Object.keys(enduranceResponse) : 'null'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'H'})}).catch(()=>{});
-            // #endregion
             
             // Clear speed records - Supabase requires a WHERE clause, so we use a filter that matches all records
             const speedResponseRaw = await fetch(`${this.game.supabase.url}/rest/v1/speed_records?id=not.is.null`, {
@@ -776,34 +756,18 @@ class DevMode {
                     'Content-Type': 'application/json'
                 }
             });
-            // #region agent log
-            const speedContentRange = speedResponseRaw.headers.get('Content-Range');
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:756',message:'DELETE speed raw response',data:{status:speedResponseRaw.status,contentRange:speedContentRange},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'N'})}).catch(()=>{});
-            // #endregion
             const speedText = await speedResponseRaw.text();
             const speedResponse = speedText ? JSON.parse(speedText) : [];
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:764',message:'DELETE speed parsed response',data:{status:speedResponseRaw.status,contentRange:speedContentRange,responseLength:Array.isArray(speedResponse) ? speedResponse.length : 'not-array',responseType:typeof speedResponse},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'P'})}).catch(()=>{});
-            // #endregion
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:755',message:'DELETE speed_records response',data:{response:JSON.stringify(speedResponse),responseType:typeof speedResponse,responseKeys:speedResponse ? Object.keys(speedResponse) : 'null'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'I'})}).catch(()=>{});
-            // #endregion
             
             // Check counts after deletion
             const afterEndurance = await this.game.supabase.fetch('/rest/v1/endurance_records?select=id&limit=1', { method: 'GET' });
             const afterSpeed = await this.game.supabase.fetch('/rest/v1/speed_records?select=id&limit=1', { method: 'GET' });
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:761',message:'Record counts after deletion',data:{beforeEndurance:beforeEndurance?.length||0,beforeSpeed:beforeSpeed?.length||0,afterEndurance:afterEndurance?.length||0,afterSpeed:afterSpeed?.length||0,enduranceDeleted:Array.isArray(enduranceResponse) ? enduranceResponse.length : 'unknown',speedDeleted:Array.isArray(speedResponse) ? speedResponse.length : 'unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'J'})}).catch(()=>{});
-            // #endregion
             
             const enduranceCount = Array.isArray(enduranceResponse) ? enduranceResponse.length : 0;
             const speedCount = Array.isArray(speedResponse) ? speedResponse.length : 0;
             
             if (enduranceCount === 0 && speedCount === 0) {
                 console.warn('⚠️ DELETE returned 0 rows - records may not have been deleted');
-                // #region agent log
-                fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:776',message:'WARNING: No rows deleted',data:{enduranceCount,speedCount},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'K'})}).catch(()=>{});
-                // #endregion
                 alert('⚠️ WARNING: DELETE operation returned 0 rows deleted!\n\nThis means Row Level Security (RLS) policies are blocking deletion.\n\nTo fix this:\n1. Go to Supabase SQL Editor\n2. Run the migration file: database/allow_delete_policies.sql\n\nOr manually run:\n\nDROP POLICY IF EXISTS "Anyone can delete speed records" ON public.speed_records;\nCREATE POLICY "Anyone can delete speed records" \n    ON public.speed_records FOR DELETE \n    USING (true);\n\nDROP POLICY IF EXISTS "Anyone can delete endurance records" ON public.endurance_records;\nCREATE POLICY "Anyone can delete endurance records" \n    ON public.endurance_records FOR DELETE \n    USING (true);\n\nlocalStorage was cleared successfully.');
             } else {
                 console.log(`✓ Cleared ${enduranceCount} endurance_records and ${speedCount} speed_records from Supabase`);
@@ -820,9 +784,6 @@ class DevMode {
             
             location.reload();
         } catch (error) {
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dev-mode.js:767',message:'DELETE failed with error',data:{errorMessage:error.message,errorStatus:error.status,errorStatusText:error.statusText,errorStack:error.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
             console.error('Failed to clear Supabase leaderboards:', error);
             
             // Check if it's an RLS/permissions error

@@ -26,7 +26,7 @@ class PiGame {
         const savedLayout = localStorage.getItem('piGameLayout');
         // If saved layout is 'minimal', default to 'classic' since minimal mode is removed
         this.currentLayout = (savedLayout === 'minimal') ? 'classic' : (savedLayout || 'classic');
-        this.revealGridSize = 50; // Number of cells visible in reveal mode
+        this.revealGridSize = 30; // Number of cells visible in reveal mode (3 rows of 10)
         
         // Anti-cheat state
         this.lastInputTime = 0;
@@ -383,7 +383,7 @@ class PiGame {
     initRevealGrid() {
         if (!this.elements.revealGrid) return;
         
-        // Clear and create grid cells
+        // Clear and create grid cells - show initial 3 rows (30 cells)
         this.elements.revealGrid.innerHTML = '';
         
         for (let i = 0; i < this.revealGridSize; i++) {
@@ -393,18 +393,64 @@ class PiGame {
             if (i === 0) cell.classList.add('current');
             this.elements.revealGrid.appendChild(cell);
         }
+        
+        // Track the start index of the visible window
+        this.revealWindowStart = 0;
     }
     
     updateRevealGrid(index, digit, isCorrect) {
         if (!this.elements.revealGrid) return;
         
-        const cells = this.elements.revealGrid.querySelectorAll('.reveal-cell');
+        const cellsPerRow = 10;
+        const rowsToShow = 3;
+        const windowSize = rowsToShow * cellsPerRow; // 30 cells
         
-        // Check if we need to add more cells
-        if (index >= cells.length) {
-            // Add more cells
-            const startIndex = cells.length;
-            for (let i = startIndex; i < index + this.revealGridSize; i++) {
+        // Initialize window start if not set
+        if (this.revealWindowStart === undefined) {
+            this.revealWindowStart = 0;
+        }
+        
+        // Calculate which row the current index is in
+        const currentRow = Math.floor(index / cellsPerRow);
+        const positionInRow = index % cellsPerRow;
+        
+        // Move window up when we complete a row (entered the last digit of a row, position 9)
+        // This ensures the next row appears immediately after completing the current row
+        if (isCorrect && positionInRow === 9) {
+            // Just completed the last digit of a row (index 9, 19, 29, etc.)
+            // Move window forward to show the next row
+            const nextRow = currentRow + 1;
+            // Show rows: (nextRow - 2), (nextRow - 1), nextRow
+            // This puts the "?" for the next digit in the bottom row
+            const desiredWindowStartRow = Math.max(0, nextRow - (rowsToShow - 1));
+            const desiredWindowStart = desiredWindowStartRow * cellsPerRow;
+            this.revealWindowStart = desiredWindowStart;
+        } else {
+            // For other positions, keep current cell visible in the last row when possible
+            const desiredWindowStartRow = Math.max(0, currentRow - (rowsToShow - 1));
+            const desiredWindowStart = desiredWindowStartRow * cellsPerRow;
+            if (desiredWindowStart > this.revealWindowStart) {
+                this.revealWindowStart = desiredWindowStart;
+            }
+        }
+        
+        const windowEnd = this.revealWindowStart + windowSize;
+        
+        // Remove cells outside the window
+        const cells = this.elements.revealGrid.querySelectorAll('.reveal-cell');
+        cells.forEach(cell => {
+            const cellIndex = parseInt(cell.dataset.index);
+            if (cellIndex < this.revealWindowStart || cellIndex >= windowEnd) {
+                cell.remove();
+            }
+        });
+        
+        // Add cells for the current window
+        const existingCells = this.elements.revealGrid.querySelectorAll('.reveal-cell');
+        const existingIndices = Array.from(existingCells).map(cell => parseInt(cell.dataset.index));
+        
+        for (let i = this.revealWindowStart; i < windowEnd; i++) {
+            if (!existingIndices.includes(i)) {
                 const cell = document.createElement('div');
                 cell.className = 'reveal-cell';
                 cell.dataset.index = i;
@@ -412,17 +458,18 @@ class PiGame {
             }
         }
         
+        // Update all cells in the window
         const allCells = this.elements.revealGrid.querySelectorAll('.reveal-cell');
         
-        // Update current cell
-        allCells.forEach((cell, i) => {
+        allCells.forEach(cell => {
+            const cellIndex = parseInt(cell.dataset.index);
             cell.classList.remove('current', 'wrong');
             
-            if (i < index) {
+            if (cellIndex < index) {
                 // Already revealed
                 cell.classList.add('revealed');
-                cell.textContent = this.enteredDigits[i] || '';
-            } else if (i === index) {
+                cell.textContent = this.enteredDigits[cellIndex] || '';
+            } else if (cellIndex === index) {
                 if (isCorrect) {
                     cell.classList.add('revealed');
                     cell.textContent = digit;
@@ -433,7 +480,7 @@ class PiGame {
                         cell.classList.add('current');
                     }, 400);
                 }
-            } else if (i === index + 1 && isCorrect) {
+            } else if (cellIndex === index + 1 && isCorrect) {
                 cell.classList.add('current');
             }
         });
@@ -441,12 +488,6 @@ class PiGame {
         // Update digit number display
         if (this.elements.revealDigitNum) {
             this.elements.revealDigitNum.textContent = index + 1;
-        }
-        
-        // Auto-scroll to show current cell
-        const currentCell = this.elements.revealGrid.querySelector('.current');
-        if (currentCell) {
-            currentCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
     
@@ -1242,17 +1283,6 @@ class PiGame {
                 // Load endurance leaderboard from Supabase
                 const enduranceData = await this.supabase.getEnduranceLeaderboard(200);
                 console.log(`Loaded ${enduranceData.length} endurance records from Supabase`);
-                // #region agent log
-                // Group by user/guest to see duplicates
-                const grouped = {};
-                enduranceData.forEach(r => {
-                    const key = r.user_id || r.guest_name || 'unknown';
-                    if (!grouped[key]) grouped[key] = [];
-                    grouped[key].push({id: r.id, digits: r.max_digits || r.digits, created_at: r.created_at});
-                });
-                fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:1245',message:'Raw endurance data from Supabase with duplicates',data:{totalRecords:enduranceData.length,groupedByUser:Object.keys(grouped).map(k=>({key:k,count:grouped[k].length,records:grouped[k]})),allRecords:enduranceData.map(r=>({id:r.id,user_id:r.user_id,guest_name:r.guest_name,username:r.username,digits:r.max_digits||r.digits}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run4',hypothesisId:'V'})}).catch(()=>{});
-                // #endregion
-                
                 // Deduplicate: Keep only the best record per user/guest
                 const seen = new Map(); // key: user_id or guest_name, value: best record
                 enduranceData.forEach(record => {
@@ -1266,9 +1296,6 @@ class PiGame {
                 });
                 
                 const deduplicated = Array.from(seen.values());
-                // #region agent log
-                fetch('http://127.0.0.1:7243/ingest/0ba7579a-2f83-4fcf-94c2-3594b37a896c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:1255',message:'Deduplicated endurance data',data:{originalCount:enduranceData.length,deduplicatedCount:deduplicated.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'T'})}).catch(()=>{});
-                // #endregion
                 
                 this.enduranceLeaderboard = deduplicated.map(record => ({
                     name: record.username || record.name || record.guest_name,
