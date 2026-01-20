@@ -449,6 +449,7 @@ body {
 
 #gameScreen {
     padding: 20px;
+    padding-bottom: 40px; /* Extra padding for reveal mode buttons */
 }
 
 .home-btn {
@@ -646,7 +647,7 @@ body {
     display: flex;
     justify-content: center;
     gap: 15px;
-    margin: 20px auto;
+    margin: 20px auto 30px;
     max-width: 400px;
 }
 
