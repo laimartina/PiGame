@@ -43,6 +43,10 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+html {
+    zoom: 0.8; /* Make 80% zoom the new 100% */
+}
+
 html, body {
     min-height: 100%;
     height: 100%;
@@ -273,7 +277,7 @@ body {
 
 .game-container {
     flex: 1;
-    min-height: 0;
+    min-height: calc(100vh - var(--header-height));
     position: relative;
     overflow: visible;
 }
