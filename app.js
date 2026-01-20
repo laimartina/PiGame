@@ -1627,7 +1627,7 @@ class PiGame {
                 `;
                 document.body.appendChild(message);
                 
-                setTimeout(() => {
+        setTimeout(() => {
                     message.remove();
                 }, 2000);
             } else {

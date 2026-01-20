@@ -405,9 +405,9 @@ class SupabaseClient {
         
         try {
             // Get all records for this milestone (digit count)
-            const data = await this.fetch(
-                `/rest/v1/speed_records?digit_milestone=eq.${milestone}&select=*&order=time_ms.asc&limit=${limit}`
-            );
+        const data = await this.fetch(
+            `/rest/v1/speed_records?digit_milestone=eq.${milestone}&select=*&order=time_ms.asc&limit=${limit}`
+        );
             return data;
         } catch (error) {
             console.error('Failed to fetch speed leaderboard:', error);
@@ -425,7 +425,7 @@ class SupabaseClient {
             const data = await this.fetch(
                 `/rest/v1/speed_records?select=*&order=digit_milestone.desc,time_ms.asc&limit=${limit}`
             );
-            return data;
+        return data;
         } catch (error) {
             console.error('Failed to fetch all speed records:', error);
             return [];
@@ -440,9 +440,9 @@ class SupabaseClient {
         try {
             // Query the table directly to get ALL records (not just best per user)
             // This allows multiple records for the same user to appear in the leaderboard
-            const data = await this.fetch(
+        const data = await this.fetch(
                 `/rest/v1/endurance_records?select=*&order=max_digits.desc,time_ms.asc&limit=${limit}`
-            );
+        );
             return data || [];
         } catch (error) {
             console.error('Failed to fetch endurance leaderboard:', error);

@@ -254,7 +254,7 @@ class AdManager {
                     console.warn('Banner container still has zero dimensions after waiting');
                     // Force dimensions
                     bannerContainer.style.width = '100%';
-                    bannerContainer.style.minHeight = '50px';
+                    bannerContainer.style.minHeight = '32px';
                 }
             }
             
@@ -270,7 +270,8 @@ class AdManager {
             }
             
             container.style.width = '100%';
-            container.style.minHeight = '50px';
+            container.style.minHeight = '32px';
+            container.style.maxHeight = '32px';
             container.style.display = 'block';
             
             // Get publisher ID and slot ID
@@ -295,19 +296,22 @@ class AdManager {
             adDiv.className = 'adsbygoogle';
             adDiv.style.display = 'block';
             adDiv.style.width = '100%';
-            adDiv.style.minHeight = '50px';
+            adDiv.style.minHeight = '32px';
+            adDiv.style.maxHeight = '32px';
+            adDiv.style.overflow = 'hidden';
             adDiv.setAttribute('data-ad-client', clientId);
             
             if (slotId) {
                 // Use specific ad unit with slot ID (recommended)
                 adDiv.setAttribute('data-ad-slot', slotId);
-                adDiv.setAttribute('data-ad-format', 'auto');
+                adDiv.setAttribute('data-ad-format', 'horizontal');
+                adDiv.setAttribute('data-ad-layout', 'in-article');
                 adDiv.setAttribute('data-full-width-responsive', 'true');
                 console.log('Using AdSense ad unit with slot ID:', slotId);
             } else {
                 // Use responsive format without slot ID (works with Auto Ads)
                 // This will work once Auto Ads are enabled in AdSense
-                adDiv.setAttribute('data-ad-format', 'auto');
+                adDiv.setAttribute('data-ad-format', 'horizontal');
                 adDiv.setAttribute('data-full-width-responsive', 'true');
                 console.log('Using Auto Ads format. Make sure Auto Ads are enabled in your AdSense account.');
                 console.log('Note: Ads may not show until your site is approved by AdSense.');

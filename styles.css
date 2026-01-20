@@ -135,7 +135,7 @@ body {
     margin: 0 auto;
     background: linear-gradient(180deg, var(--void) 0%, var(--deep-space) 50%, var(--nebula) 100%);
     box-shadow: 0 0 100px rgba(0, 245, 212, 0.1);
-    padding-bottom: 50px;
+    padding-bottom: 160px; /* Space for footer (60px) + gap + ad (32px) */
     z-index: 1;
     overflow: hidden;
 }
@@ -303,6 +303,7 @@ body {
     justify-content: center;
     align-items: center;
     text-align: center;
+    padding-bottom: 160px; /* Extra space for footer + ad */
 }
 
 .title {
@@ -798,6 +799,7 @@ body {
 
 #leaderboardScreen {
     padding: 20px;
+    padding-bottom: 160px; /* Extra space for footer + ad */
 }
 
 .leaderboard-header {
@@ -1203,6 +1205,12 @@ body {
    ======================================== */
 
 .footer {
+    position: fixed;
+    bottom: 100px; /* Position well above ad (ad is 32px tall) */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 500px;
     display: flex;
     gap: 10px;
     padding: 10px 20px;
@@ -1210,6 +1218,7 @@ body {
     background: rgba(5, 5, 16, 0.8);
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 1002; /* Above the ad */
 }
 
 .footer-btn {
@@ -1235,13 +1244,13 @@ body {
 
 .banner-ad {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: 0; /* At the very bottom */
+    left: 50%;
+    transform: translateX(-50%);
     width: 100%;
     max-width: 500px;
-    margin: 0 auto;
-    height: 50px;
+    height: 32px;
+    max-height: 32px;
     background: rgba(10, 10, 26, 0.95);
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -1251,16 +1260,19 @@ body {
     justify-content: center;
     padding: 0 10px;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
 }
 
 .banner-ad-content {
     width: 100%;
     max-width: 100%;
     height: 100%;
+    max-height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    overflow: hidden;
 }
 
 .banner-ad-label {
@@ -1279,6 +1291,7 @@ body {
 .banner-ad-placeholder {
     width: 100%;
     height: 100%;
+    max-height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1287,6 +1300,7 @@ body {
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .banner-ad-placeholder:hover {
@@ -1310,6 +1324,13 @@ body {
 
 .banner-ad {
     z-index: 1001;
+}
+
+/* Constrain AdSense ads to container size */
+.banner-ad .adsbygoogle {
+    max-height: 32px !important;
+    overflow: hidden !important;
+    display: block !important;
 }
 
 /* ========================================

@@ -552,29 +552,29 @@ class DevMode {
             }
         } else {
             // Add to localStorage (offline mode)
-            const endurance = [];
-            for (let i = 0; i < 20; i++) {
-                endurance.push({
-                    name: names[i % names.length] + (i > 11 ? i : ''),
+        const endurance = [];
+        for (let i = 0; i < 20; i++) {
+            endurance.push({
+                name: names[i % names.length] + (i > 11 ? i : ''),
                     digits: Math.floor(Math.random() * 5000) + 100,
                     time: (Math.floor(Math.random() * 300000) + 10000) / 1000,
                     date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
-                });
-            }
+            });
+        }
             endurance.sort((a, b) => b.digits - a.digits);
-            localStorage.setItem('piGame_enduranceLeaderboard', JSON.stringify(endurance));
-            
+        localStorage.setItem('piGame_enduranceLeaderboard', JSON.stringify(endurance));
+        
             // Add speed entries (new format with all array)
             const allSpeedRecords = [];
             [10, 20, 50, 100, 200, 500].forEach(milestone => {
-                for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 10; i++) {
                     allSpeedRecords.push({
-                        name: names[i % names.length],
+                    name: names[i % names.length],
                         digits: milestone,
                         time: ((milestone * 100) + Math.random() * milestone * 50) / 1000,
                         date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
-                    });
-                }
+                });
+            }
             });
             allSpeedRecords.sort((a, b) => {
                 if (a.digits !== b.digits) return b.digits - a.digits;
@@ -582,9 +582,9 @@ class DevMode {
             });
             
             this.game.speedLeaderboard = { all: allSpeedRecords };
-            this.game.enduranceLeaderboard = endurance;
+        this.game.enduranceLeaderboard = endurance;
             localStorage.setItem('piGame_speedLeaderboard', JSON.stringify(this.game.speedLeaderboard));
-            
+        
             alert('✓ Added fake leaderboard entries to localStorage!\nGo to Leaderboard to see them.');
         }
         
