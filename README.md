@@ -5,7 +5,7 @@ A memory game where you challenge yourself to memorize digits of Pi!
 ## Features
 
 - 🎮 Multiple game modes (Classic, Reveal, Training)
-- 🏆 Leaderboards (Speed & Endurance)
+- 🏆 Global Leaderboards (Speed & Endurance) - compete with players worldwide!
 - ❤️ Lives system with regeneration
 - 📊 Statistics tracking
 - 🌌 Beautiful cosmic-themed UI
@@ -50,6 +50,7 @@ PiGame/
 
 ## Documentation
 
+- **SETUP_GLOBAL_LEADERBOARDS.md** - Set up global leaderboards with Supabase
 - **SETUP_INSTRUCTIONS.md** - How to set up mobile apps
 - **QUICK_START.md** - Quick reference guide
 - **BUILD_GUIDE.md** - Complete build instructions
@@ -75,7 +76,7 @@ Then rebuild in Android Studio or Xcode.
 - **Frontend**: Vanilla JavaScript, HTML5, CSS3
 - **Mobile**: Capacitor
 - **PWA**: Service Worker, Web App Manifest
-- **Storage**: LocalStorage, Supabase (optional)
+- **Storage**: LocalStorage, Supabase (for global leaderboards)
 
 ## License
 

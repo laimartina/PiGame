@@ -12,8 +12,8 @@
 // =============================================
 // CONFIGURATION - Replace with your Supabase credentials
 // =============================================
-const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // e.g., 'https://xxxxx.supabase.co'
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // e.g., 'eyJhbGc...'
+const SUPABASE_URL = 'https://sgflbbowzkhzioffekux.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_k7_4nbXvy_9WRgUcvTYtTA_xuo36RWV';
 
 // =============================================
 // Supabase Client
@@ -25,7 +25,7 @@ class SupabaseClient {
         this.accessToken = null;
         this.user = null;
         this.profile = null;
-        this.isConfigured = this.url !== 'YOUR_SUPABASE_URL';
+        this.isConfigured = this.url !== 'YOUR_SUPABASE_URL' && this.url.startsWith('https://') && this.key !== 'YOUR_SUPABASE_ANON_KEY';
         
         if (this.isConfigured) {
             this.init();
@@ -76,11 +76,37 @@ class SupabaseClient {
         });
         
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || error.error_description || 'Request failed');
+            let errorMessage = 'Request failed';
+            try {
+                const text = await response.text();
+                if (text) {
+                    const error = JSON.parse(text);
+                    errorMessage = error.message || error.error_description || error.hint || JSON.stringify(error);
+                } else {
+                    errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                }
+            } catch (e) {
+                errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            }
+            const fullError = new Error(errorMessage);
+            fullError.status = response.status;
+            fullError.statusText = response.statusText;
+            throw fullError;
         }
         
-        return response.json();
+        // Handle empty responses (common with Prefer: return=minimal)
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+            // Empty response means success (common for INSERT with return=minimal)
+            return { success: true };
+        }
+        
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            // If it's not JSON, return the text as success
+            return { success: true, data: text };
+        }
     }
     
     async rpc(functionName, params = {}) {
@@ -259,13 +285,104 @@ class SupabaseClient {
         return data;
     }
     
-    async submitScore(sessionId, scoreData) {
-        if (!this.isAuthenticated() || sessionId.startsWith('offline_')) {
-            // Offline mode - save to localStorage
+    async submitScore(sessionId, scoreData, playerName = 'Anonymous') {
+        if (!this.isConfigured) {
+            // Not configured - save to localStorage
             this.saveOfflineScore(scoreData);
             return { success: true, is_valid: true, offline: true };
         }
         
+        // For anonymous users, submit directly to tables (if schema supports it)
+        if (sessionId.startsWith('offline_') || !this.isAuthenticated()) {
+            try {
+                // Submit as anonymous/guest user
+                const timeMs = scoreData.timeMs || (scoreData.time * 1000);
+                const digits = scoreData.digits;
+                
+                // Submit endurance record (most digits)
+                try {
+                    await this.fetch('/rest/v1/endurance_records', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            user_id: null,
+                            username: playerName.substring(0, 20),
+                            guest_name: playerName.substring(0, 20),
+                            max_digits: digits,
+                            time_ms: timeMs
+                        }),
+                        headers: { 'Prefer': 'return=minimal' }
+                    });
+                    console.log(`✓ Endurance record saved: ${digits} digits in ${(timeMs/1000).toFixed(2)}s`);
+                } catch (error) {
+                    console.error('Failed to save endurance record:', error.message);
+                    throw error; // Re-throw so caller knows it failed
+                }
+                
+                // Submit speed record for the actual digit count achieved
+                // Save a speed record for whatever digit count was reached
+                if (digits > 0) {
+                    try {
+                        // First, try to get existing record for this exact digit count
+                        const existing = await this.fetch(
+                            `/rest/v1/speed_records?guest_name=eq.${encodeURIComponent(playerName.substring(0, 20))}&digit_milestone=eq.${digits}&user_id=is.null`,
+                            { method: 'GET' }
+                        );
+                        
+                        if (existing && existing.length > 0) {
+                            // Record exists - update if new time is better
+                            const existingTime = existing[0].time_ms;
+                            if (timeMs < existingTime) {
+                                await this.fetch(
+                                    `/rest/v1/speed_records?id=eq.${existing[0].id}`,
+                                    {
+                                        method: 'PATCH',
+                                        body: JSON.stringify({
+                                            time_ms: timeMs
+                                        }),
+                                        headers: { 'Prefer': 'return=minimal' }
+                                    }
+                                );
+                                console.log(`✓ Updated speed record for ${digits} digits (better time: ${(timeMs/1000).toFixed(2)}s)`);
+                            } else {
+                                console.log(`Speed record for ${digits} digits already has better time`);
+                            }
+                        } else {
+                            // No existing record - insert new one
+                            await this.fetch('/rest/v1/speed_records', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    user_id: null,
+                                    username: playerName.substring(0, 20),
+                                    guest_name: playerName.substring(0, 20),
+                                    digit_milestone: digits, // Use actual digit count, not milestone
+                                    time_ms: timeMs
+                                }),
+                                headers: { 'Prefer': 'return=minimal' }
+                            });
+                            console.log(`✓ Speed record saved for ${digits} digits (${(timeMs/1000).toFixed(2)}s)`);
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to save speed record for ${digits} digits:`, error.message);
+                    }
+                }
+                
+                return { success: true, is_valid: true, anonymous: true };
+            } catch (error) {
+                console.error('Failed to submit anonymous score:', error);
+                const errorMessage = error.message || JSON.stringify(error);
+                console.error('Error details:', errorMessage);
+                // Fall back to local storage
+                this.saveOfflineScore(scoreData);
+                return { 
+                    success: false, 
+                    is_valid: false, 
+                    offline: true,
+                    error: errorMessage 
+                };
+            }
+        }
+        
+        // Authenticated users use the RPC function
         return this.rpc('submit_game_score', {
             p_session_id: sessionId,
             p_digits: scoreData.digits,
@@ -285,24 +402,51 @@ class SupabaseClient {
             return this.getOfflineLeaderboard('speed', milestone);
         }
         
-        const data = await this.fetch(
-            `/rest/v1/speed_records?digit_milestone=eq.${milestone}&select=*&order=time_ms.asc&limit=${limit}`
-        );
-        
-        return data;
+        try {
+            // Get all records for this milestone (digit count)
+            const data = await this.fetch(
+                `/rest/v1/speed_records?digit_milestone=eq.${milestone}&select=*&order=time_ms.asc&limit=${limit}`
+            );
+            return data;
+        } catch (error) {
+            console.error('Failed to fetch speed leaderboard:', error);
+            return this.getOfflineLeaderboard('speed', milestone);
+        }
     }
     
-    async getEnduranceLeaderboard(limit = 100) {
+    async getAllSpeedRecords(limit = 1000) {
+        if (!this.isConfigured) {
+            return [];
+        }
+        
+        try {
+            // Get all speed records, ordered by digit count (descending) then time (ascending)
+            const data = await this.fetch(
+                `/rest/v1/speed_records?select=*&order=digit_milestone.desc,time_ms.asc&limit=${limit}`
+            );
+            return data;
+        } catch (error) {
+            console.error('Failed to fetch all speed records:', error);
+            return [];
+        }
+    }
+    
+    async getEnduranceLeaderboard(limit = 200) {
         if (!this.isConfigured) {
             return this.getOfflineLeaderboard('endurance');
         }
         
-        // Get best score per user
-        const data = await this.fetch(
-            `/rest/v1/leaderboard_endurance?select=*&order=max_digits.desc&limit=${limit}`
-        );
-        
-        return data;
+        try {
+            // Query the table directly to get ALL records (not just best per user)
+            // This allows multiple records for the same user to appear in the leaderboard
+            const data = await this.fetch(
+                `/rest/v1/endurance_records?select=*&order=max_digits.desc,time_ms.asc&limit=${limit}`
+            );
+            return data || [];
+        } catch (error) {
+            console.error('Failed to fetch endurance leaderboard:', error);
+            return this.getOfflineLeaderboard('endurance');
+        }
     }
     
     async getUserRank(userId, type = 'endurance') {

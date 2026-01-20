@@ -50,11 +50,17 @@ class PiGame {
             training: 0
         };
         
-        // Leaderboards
-        this.speedLeaderboard = this.loadLeaderboard('speed');
-        this.enduranceLeaderboard = this.loadLeaderboard('endurance');
-        this.trainingSpeedLeaderboard = this.loadLeaderboard('trainingSpeed');
-        this.trainingEnduranceLeaderboard = this.loadLeaderboard('trainingEndurance');
+        // Initialize Supabase client for global leaderboards
+        this.supabase = null;
+        if (typeof SupabaseClient !== 'undefined') {
+            this.supabase = new SupabaseClient();
+        }
+        
+        // Leaderboards (will be loaded asynchronously from Supabase if available)
+        this.speedLeaderboard = { all: [] };
+        this.enduranceLeaderboard = [];
+        this.trainingSpeedLeaderboard = { all: [] };
+        this.trainingEnduranceLeaderboard = [];
         
         // Initialize Pi Digits Manager (100k offline + unlimited online)
         this.initPiDigits();
@@ -66,6 +72,9 @@ class PiGame {
         this.initAntiCheat();
         this.updateUI();
         this.updateDigitCounterDisplay(); // Initialize counter displays
+        
+        // Load leaderboards (async - from Supabase if available, else localStorage)
+        this.loadAllLeaderboards();
     }
     
     // ========================================
@@ -981,7 +990,7 @@ class PiGame {
         nameInput.focus();
     }
     
-    saveScore() {
+    async saveScore() {
         const nameInput = document.getElementById('playerName');
         const name = nameInput.value.trim() || 'Anonymous';
         
@@ -991,8 +1000,48 @@ class PiGame {
         if (this.pendingScore) {
             const isTraining = this.currentLayout === 'training';
             
+            // Save to Supabase if configured (for global leaderboards)
+            if (this.supabase && this.supabase.isConfigured && !isTraining) {
+                try {
+                    // Create or get session
+                    const session = await this.supabase.startGameSession();
+                    
+                    // Submit score to Supabase (works for both authenticated and anonymous users)
+                    const result = await this.supabase.submitScore(session.id, {
+                        digits: this.pendingScore.digits,
+                        timeMs: this.pendingScore.time * 1000,
+                        time: this.pendingScore.time,
+                        suspicionScore: this.pendingScore.antiCheat?.suspicionScore || 0,
+                        avgInputTime: this.pendingScore.antiCheat?.avgInputTime || 0,
+                        inputVariance: this.pendingScore.antiCheat?.inputVariance || null
+                    }, name);
+                    
+                    if (result.success && result.is_valid) {
+                        console.log('✓ Score saved to global leaderboard');
+                        // Reload leaderboards to show updated data
+                        await this.loadAllLeaderboards();
+                        // Refresh leaderboard display if it's currently shown
+                        if (this.screens.leaderboard.classList.contains('active')) {
+                            this.renderSpeedLeaderboard();
+                            this.renderEnduranceLeaderboard();
+                        }
+                    } else {
+                        // Show error to user
+                        const errorMsg = result.error || 'Failed to save to global leaderboard';
+                        console.error('Failed to save score:', errorMsg);
+                        alert('⚠️ Could not save to global leaderboard:\n' + errorMsg + '\n\nScore saved locally instead.');
+                    }
+                } catch (error) {
+                    console.error('Failed to save to Supabase:', error);
+                    const errorMsg = error.message || 'Database error. Make sure you\'ve run the database schema setup.';
+                    alert('⚠️ Error saving to leaderboard:\n' + errorMsg + '\n\nScore saved locally instead.\n\nSee SETUP_GLOBAL_LEADERBOARDS.md for setup instructions.');
+                    // Fall through to save locally
+                }
+            }
+            
+            // Always save locally as backup
             if (isTraining) {
-                // Save to training leaderboards
+                // Save to training leaderboards (local only)
                 this.addToTrainingEnduranceLeaderboard({
                     name,
                     digits: this.pendingScore.digits,
@@ -1004,7 +1053,7 @@ class PiGame {
                     this.recordTrainingSpeedScore(this.pendingScore.digits, this.pendingScore.time);
                 }
             } else {
-                // Save to regular leaderboards
+                // Save to regular leaderboards (local backup)
                 this.addToEnduranceLeaderboard({
                     name,
                     digits: this.pendingScore.digits,
@@ -1117,6 +1166,51 @@ class PiGame {
         this.saveLeaderboard('trainingSpeed', this.trainingSpeedLeaderboard);
     }
     
+    async loadAllLeaderboards() {
+        // Load from Supabase if configured, otherwise from localStorage
+        if (this.supabase && this.supabase.isConfigured) {
+            try {
+                // Load endurance leaderboard from Supabase
+                const enduranceData = await this.supabase.getEnduranceLeaderboard(200);
+                console.log(`Loaded ${enduranceData.length} endurance records from Supabase`);
+                this.enduranceLeaderboard = enduranceData.map(record => ({
+                    name: record.username || record.name,
+                    digits: record.max_digits || record.digits,
+                    time: (record.time_ms || record.time) / 1000,
+                    date: record.created_at || record.date
+                }));
+                console.log(`✓ Processed ${this.enduranceLeaderboard.length} endurance records`);
+                
+                // Load speed leaderboard from Supabase (all records, not just milestones)
+                // Get all speed records, ordered by digit count
+                const speedData = await this.supabase.getAllSpeedRecords();
+                const allSpeedRecords = (speedData || []).map(record => ({
+                    name: record.username || record.name,
+                    digits: record.digit_milestone,
+                    time: (record.time_ms || record.time) / 1000,
+                    date: record.created_at || record.date
+                }));
+                this.speedLeaderboard = { all: allSpeedRecords };
+                console.log(`✓ Loaded ${allSpeedRecords.length} speed records from Supabase`);
+                
+                console.log('✓ Loaded leaderboards from Supabase');
+            } catch (error) {
+                console.error('Failed to load from Supabase, using localStorage:', error);
+                this.loadLeaderboardsFromLocalStorage();
+            }
+        } else {
+            this.loadLeaderboardsFromLocalStorage();
+        }
+    }
+    
+    loadLeaderboardsFromLocalStorage() {
+        // Fallback to localStorage
+        this.speedLeaderboard = this.loadLeaderboard('speed');
+        this.enduranceLeaderboard = this.loadLeaderboard('endurance');
+        this.trainingSpeedLeaderboard = this.loadLeaderboard('trainingSpeed');
+        this.trainingEnduranceLeaderboard = this.loadLeaderboard('trainingEndurance');
+    }
+    
     loadLeaderboard(type) {
         try {
             const data = localStorage.getItem(`piGame_${type}Leaderboard`);
@@ -1167,8 +1261,15 @@ class PiGame {
         }
     }
     
-    saveLeaderboard(type, data) {
+    async saveLeaderboard(type, data) {
+        // Always save to localStorage as backup
         localStorage.setItem(`piGame_${type}Leaderboard`, JSON.stringify(data));
+        
+        // If Supabase is configured, also save to global leaderboard
+        if (this.supabase && this.supabase.isConfigured && type !== 'trainingSpeed' && type !== 'trainingEndurance') {
+            // Note: Global leaderboards are updated via saveScore method
+            // This method is kept for localStorage backup
+        }
     }
     
     switchLeaderboardTab(tab) {
@@ -1474,7 +1575,7 @@ class PiGame {
     // UI Helpers
     // ========================================
     
-    showScreen(screenName) {
+    async showScreen(screenName) {
         Object.values(this.screens).forEach(screen => {
             screen.classList.remove('active');
         });
@@ -1482,6 +1583,8 @@ class PiGame {
         
         // Render leaderboards when showing that screen
         if (screenName === 'leaderboard') {
+            // Reload leaderboards to get latest global data
+            await this.loadAllLeaderboards();
             this.renderSpeedLeaderboard();
             this.renderEnduranceLeaderboard();
         }
