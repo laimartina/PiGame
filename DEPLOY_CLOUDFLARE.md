@@ -42,7 +42,9 @@ After connecting to GitHub, you'll see a form asking for project configuration. 
 **Build Settings:**
 
 - **Build command**: `npm run build`
-- **Deploy command**: `npx wrangler pages deploy dist --project-name=pi-game`
+- **Deploy command**: `npx wrangler pages deploy ./dist --project-name=pi-game --compatibility-date=2024-01-01`
+
+**Note:** The `dist` directory must be explicitly specified in the deploy command. The `wrangler.toml` file should also have `pages_build_output_dir = "dist"` configured (which is already set in your project).
 
 **Advanced Settings / Path:**
 
@@ -59,8 +61,8 @@ Fill in the following fields:
 - **Production branch**: `main`
 - **Root directory**: `/` (or leave as default/empty)
 - **Build command**: `npm run build` (Optional)
-- **Deploy command**: `npx wrangler pages deploy dist --project-name=pi-game` (Required)
-- **Non-production branch deploy command**: `npx wrangler pages deploy dist --project-name=pi-game` (Optional - can leave empty to use same as production)
+- **Deploy command**: `npx wrangler pages deploy ./dist --project-name=pi-game` (Required)
+- **Non-production branch deploy command**: `npx wrangler pages deploy ./dist --project-name=pi-game` (Optional - can leave empty to use same as production)
 
 #### What is "Root directory"?
 
@@ -78,11 +80,11 @@ The **Root directory** field tells Cloudflare Pages where your project files are
 
 **For Production Branch:**
 ```
-npx wrangler pages deploy dist --project-name=pi-game
+npx wrangler pages deploy ./dist --project-name=pi-game
 ```
 
 **For Non-Production Branches:**
-- You can use the same command: `npx wrangler pages deploy dist --project-name=pi-game`
+- You can use the same command: `npx wrangler pages deploy ./dist --project-name=pi-game`
 - Or leave empty to inherit from production settings
 
 #### Why `dist`?
@@ -201,7 +203,7 @@ npx wrangler pages deploy . --project-name=pi-game
 
 # Or deploy from dist directory (after building)
 npm run build
-npx wrangler pages deploy dist --project-name=pi-game
+npx wrangler pages deploy ./dist --project-name=pi-game
 ```
 
 **Common Mistake:**
@@ -262,7 +264,7 @@ If you see this error, there are a few possible causes:
 wrangler deploy
 
 # ✅ Correct command (for Pages):
-wrangler pages deploy dist --project-name=pi-game
+wrangler pages deploy ./dist --project-name=pi-game
 ```
 
 #### Problem 2: Deploy command in Dashboard settings

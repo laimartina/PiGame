@@ -5,10 +5,8 @@
 #
 # DO NOT use: wrangler deploy (that's for Workers, not Pages)
 #
-# This file is optional for Pages deployments via CLI.
-# For dashboard deployments (Method 1), you don't need this file at all.
-# For dashboard deployments, DO NOT set a deploy command - Cloudflare
-# automatically deploys the build output directory.
+# This file is used by Cloudflare Pages to know where your build output is.
+# The pages_build_output_dir tells Cloudflare where to find the built files.
 #
 name = "pi-game"
 compatibility_date = "2024-01-01"
