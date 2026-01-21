@@ -73,8 +73,6 @@ class PiGame {
         // Leaderboards (will be loaded asynchronously from Supabase if available)
         this.speedLeaderboard = { all: [] };
         this.enduranceLeaderboard = [];
-        this.trainingSpeedLeaderboard = { all: [] };
-        this.trainingEnduranceLeaderboard = [];
         
         // Initialize Pi Digits Manager (100k offline + unlimited online)
         this.initPiDigits();
@@ -193,10 +191,7 @@ class PiGame {
             // Leaderboard
             speedList: document.getElementById('speedList'),
             enduranceList: document.getElementById('enduranceList'),
-            digitFilter: document.getElementById('digitFilter'),
-            trainingSpeedList: document.getElementById('trainingSpeedList'),
-            trainingEnduranceList: document.getElementById('trainingEnduranceList'),
-            trainingDigitFilter: document.getElementById('trainingDigitFilter')
+            digitFilter: document.getElementById('digitFilter')
         };
         
         // Modals
@@ -289,27 +284,6 @@ class PiGame {
             tab.addEventListener('click', () => this.switchLeaderboardTab(tab.dataset.tab));
         });
         this.elements.digitFilter.addEventListener('change', () => this.renderSpeedLeaderboard());
-        if (this.elements.trainingDigitFilter) {
-            this.elements.trainingDigitFilter.addEventListener('change', () => this.renderTrainingSpeedLeaderboard());
-        }
-        
-        // Training leaderboard tabs
-        document.querySelectorAll('.training-tabs .training-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const trainingTab = tab.dataset.trainingTab;
-                document.querySelectorAll('.training-tabs .training-tab').forEach(t => {
-                    t.classList.toggle('active', t === tab);
-                });
-                document.getElementById('trainingSpeedPanel').classList.toggle('active', trainingTab === 'trainingSpeed');
-                document.getElementById('trainingEndurancePanel').classList.toggle('active', trainingTab === 'trainingEndurance');
-                
-                if (trainingTab === 'trainingSpeed') {
-                    this.renderTrainingSpeedLeaderboard();
-                } else {
-                    this.renderTrainingEnduranceLeaderboard();
-                }
-            });
-        });
         
         // Shop
         document.getElementById('buyLivesBtn').addEventListener('click', () => this.openShop());
@@ -991,41 +965,65 @@ class PiGame {
             localStorage.setItem('piGameBest', this.bestScore);
         }
         
+        // Check if score is leaderboard-worthy (skip for training mode - no records/ranking)
+        const isTraining = this.currentLayout === 'training';
+        
         // Update game over screen
         this.elements.finalDigits.textContent = finalDigits;
         this.elements.finalTime.textContent = finalTime.toFixed(2) + 's';
         
-        if (isNewBest && finalDigits > 0) {
-            this.elements.gameOverTitle.textContent = '🎉 New Personal Best!';
-            this.elements.gameOverTitle.classList.add('new-record');
-        } else {
-            this.elements.gameOverTitle.textContent = voluntary ? 'Progress Saved' : 'Game Over';
+        if (isTraining) {
+            // Simplified display for training mode
+            this.elements.gameOverTitle.textContent = 'Training Complete';
             this.elements.gameOverTitle.classList.remove('new-record');
-        }
-        
-        // Show achievements
-        this.showAchievements(finalDigits, finalTime);
-        
-        // Update lives warning
-        if (this.lives <= 0) {
-            this.elements.noLivesWarning.classList.add('visible');
-            document.getElementById('retryBtn').style.display = 'none';
-        } else {
+            
+            // Hide achievements and lives warning for training mode
+            this.elements.achievements.innerHTML = '';
             this.elements.noLivesWarning.classList.remove('visible');
-            document.getElementById('retryBtn').style.display = 'block';
+            
+            // Show all buttons (no life cost in training mode)
+            const retryBtn = document.getElementById('retryBtn');
+            retryBtn.style.display = 'block';
+            retryBtn.innerHTML = 'Try Again'; // Remove life cost display
+        } else {
+            // Normal mode display
+            if (isNewBest && finalDigits > 0) {
+                this.elements.gameOverTitle.textContent = '🎉 New Personal Best!';
+                this.elements.gameOverTitle.classList.add('new-record');
+            } else {
+                this.elements.gameOverTitle.textContent = voluntary ? 'Progress Saved' : 'Game Over';
+                this.elements.gameOverTitle.classList.remove('new-record');
+            }
+            
+            // Show achievements
+            this.showAchievements(finalDigits, finalTime);
+            
+            // Update lives warning
+            if (this.lives <= 0) {
+                this.elements.noLivesWarning.classList.add('visible');
+                document.getElementById('retryBtn').style.display = 'none';
+            } else {
+                this.elements.noLivesWarning.classList.remove('visible');
+                const retryBtn = document.getElementById('retryBtn');
+                retryBtn.style.display = 'block';
+                retryBtn.innerHTML = '<span class="btn-cost">-1 ♥</span> Try Again';
+            }
+        }
+        if (!isTraining) {
+            this.pendingScore = {
+                digits: finalDigits,
+                time: finalTime,
+                antiCheat: this.getAntiCheatData()
+            };
+        } else {
+            // Clear any pending score for training mode
+            this.pendingScore = null;
         }
         
-        // Check if score is leaderboard-worthy
-        this.pendingScore = {
-            digits: finalDigits,
-            time: finalTime,
-            antiCheat: this.getAntiCheatData()
-        };
-        
-        // Show game over screen, then prompt for name if score > 0
+        // Show game over screen, then prompt for name if score > 0 (skip in training mode)
         this.showScreen('gameOver');
         
-        if (finalDigits > 0) {
+        if (finalDigits > 0 && !isTraining) {
             setTimeout(() => this.promptForName(), 500);
         }
         
@@ -1136,19 +1134,7 @@ class PiGame {
             }
             
             // Always save locally as backup
-            if (isTraining) {
-                // Save to training leaderboards (local only)
-                this.addToTrainingEnduranceLeaderboard({
-                    name,
-                    digits: this.pendingScore.digits,
-                    time: this.pendingScore.time,
-                    date: new Date().toISOString()
-                });
-                
-                if (this.pendingScore.digits > 0) {
-                    this.recordTrainingSpeedScore(this.pendingScore.digits, this.pendingScore.time);
-                }
-            } else {
+            if (!isTraining) {
                 // Save to regular leaderboards (local backup)
                 this.addToEnduranceLeaderboard({
                     name,
@@ -1219,49 +1205,6 @@ class PiGame {
         this.saveLeaderboard('endurance', this.enduranceLeaderboard);
     }
     
-    addToTrainingEnduranceLeaderboard(entry) {
-        // Add all records, even if worse than existing ones
-        this.trainingEnduranceLeaderboard.push(entry);
-        
-        // Sort by digits and keep top 200
-        this.trainingEnduranceLeaderboard.sort((a, b) => b.digits - a.digits);
-        this.trainingEnduranceLeaderboard = this.trainingEnduranceLeaderboard.slice(0, 200);
-        
-        this.saveLeaderboard('trainingEndurance', this.trainingEnduranceLeaderboard);
-    }
-    
-    recordTrainingSpeedScore(digits, time) {
-        if (this.isSuspicious()) return;
-        
-        const name = this.playerName || 'Anonymous';
-        
-        // Store all speed records in a flat array with digit count
-        if (!this.trainingSpeedLeaderboard.all) {
-            this.trainingSpeedLeaderboard.all = [];
-        }
-        
-        // Add the record with actual digit count
-        this.trainingSpeedLeaderboard.all.push({
-            name,
-            digits,
-            time,
-            date: new Date().toISOString()
-        });
-        
-        // Sort by digits (descending), then by time (ascending)
-        this.trainingSpeedLeaderboard.all.sort((a, b) => {
-            if (a.digits !== b.digits) {
-                return b.digits - a.digits;
-            }
-            return a.time - b.time;
-        });
-        
-        // Keep top 200 records
-        this.trainingSpeedLeaderboard.all = this.trainingSpeedLeaderboard.all.slice(0, 200);
-        
-        this.saveLeaderboard('trainingSpeed', this.trainingSpeedLeaderboard);
-    }
-    
     async loadAllLeaderboards() {
         // Load from Supabase if configured, otherwise from localStorage
         if (this.supabase && this.supabase.isConfigured) {
@@ -1317,15 +1260,13 @@ class PiGame {
         // Fallback to localStorage
         this.speedLeaderboard = this.loadLeaderboard('speed');
         this.enduranceLeaderboard = this.loadLeaderboard('endurance');
-        this.trainingSpeedLeaderboard = this.loadLeaderboard('trainingSpeed');
-        this.trainingEnduranceLeaderboard = this.loadLeaderboard('trainingEndurance');
     }
     
     loadLeaderboard(type) {
         try {
             const data = localStorage.getItem(`piGame_${type}Leaderboard`);
             if (!data) {
-                if (type === 'speed' || type === 'trainingSpeed') {
+                if (type === 'speed') {
                     return { all: [] };
                 }
                 return [];
@@ -1334,7 +1275,7 @@ class PiGame {
             const parsed = JSON.parse(data);
             
             // Migrate old speed leaderboard format to new format
-            if ((type === 'speed' || type === 'trainingSpeed') && !parsed.all) {
+            if (type === 'speed' && !parsed.all) {
                 // Convert old format (speed_10, speed_20, etc.) to new format
                 const allRecords = [];
                 Object.keys(parsed).forEach(key => {
@@ -1354,7 +1295,6 @@ class PiGame {
                 return { all: allRecords };
             }
             
-            // Filter out training records from main leaderboards on load
             if (type === 'endurance' && Array.isArray(parsed)) {
                 return parsed.filter(r => r.mode !== 'training');
             }
@@ -1364,7 +1304,7 @@ class PiGame {
             
             return parsed;
         } catch {
-            if (type === 'speed' || type === 'trainingSpeed') {
+            if (type === 'speed') {
                 return { all: [] };
             }
             return [];
@@ -1376,7 +1316,7 @@ class PiGame {
         localStorage.setItem(`piGame_${type}Leaderboard`, JSON.stringify(data));
         
         // If Supabase is configured, also save to global leaderboard
-        if (this.supabase && this.supabase.isConfigured && type !== 'trainingSpeed' && type !== 'trainingEndurance') {
+        if (this.supabase && this.supabase.isConfigured) {
             // Note: Global leaderboards are updated via saveScore method
             // This method is kept for localStorage backup
         }
@@ -1389,14 +1329,11 @@ class PiGame {
         
         document.getElementById('speedLeaderboard').classList.toggle('active', tab === 'speed');
         document.getElementById('enduranceLeaderboard').classList.toggle('active', tab === 'endurance');
-        document.getElementById('trainingLeaderboard').classList.toggle('active', tab === 'training');
         
         if (tab === 'speed') {
             this.renderSpeedLeaderboard();
         } else if (tab === 'endurance') {
             this.renderEnduranceLeaderboard();
-        } else if (tab === 'training') {
-            this.renderTrainingLeaderboard();
         }
     }
     
@@ -1481,114 +1418,6 @@ class PiGame {
         }
         
         this.elements.enduranceList.innerHTML = this.enduranceLeaderboard.map((record, index) => {
-            const rank = index + 1;
-            const rankClass = rank % 2 === 1 ? 'odd' : 'even';
-            const isYou = record.name === this.playerName;
-            
-            return `
-                <div class="leaderboard-entry ${isYou ? 'highlight' : ''}">
-                    <span class="entry-rank ${rankClass}">${rank}</span>
-                    <div class="entry-info">
-                        <span class="entry-name">${this.escapeHtml(record.name)}${isYou ? ' (You)' : ''}</span>
-                        <span class="entry-date">${this.formatDate(record.date)}</span>
-                    </div>
-                    <div class="entry-score">${record.digits} digits</div>
-                </div>
-            `;
-        }).join('');
-    }
-    
-    renderTrainingLeaderboard() {
-        // Show training speed by default
-        document.querySelectorAll('.training-tabs .training-tab').forEach(t => {
-            t.classList.toggle('active', t.dataset.trainingTab === 'trainingSpeed');
-        });
-        document.getElementById('trainingSpeedPanel').classList.add('active');
-        document.getElementById('trainingEndurancePanel').classList.remove('active');
-        this.renderTrainingSpeedLeaderboard();
-    }
-    
-    renderTrainingSpeedLeaderboard() {
-        const range = this.elements.trainingDigitFilter.value;
-        const allRecords = this.trainingSpeedLeaderboard.all || [];
-        
-        // Parse range (e.g., "10-19", "20-49", "50-99", "100+")
-        let minDigits, maxDigits;
-        if (range === '100+') {
-            minDigits = 100;
-            maxDigits = Infinity;
-        } else {
-            [minDigits, maxDigits] = range.split('-').map(Number);
-        }
-        
-        // Filter records in the selected range
-        const filteredRecords = allRecords.filter(r => r.digits >= minDigits && r.digits <= maxDigits);
-        
-        if (filteredRecords.length === 0) {
-            this.elements.trainingSpeedList.innerHTML = `
-                <div class="empty-leaderboard">
-                    <p>No records yet for ${range} digits!</p>
-                    <p>Be the first to set a time.</p>
-                </div>
-            `;
-            return;
-        }
-        
-        // Group by actual digit count
-        const grouped = {};
-        filteredRecords.forEach(record => {
-            if (!grouped[record.digits]) {
-                grouped[record.digits] = [];
-            }
-            grouped[record.digits].push(record);
-        });
-        
-        // Sort groups by digit count (descending), and within each group by time (ascending)
-        const digitGroups = Object.keys(grouped)
-            .map(Number)
-            .sort((a, b) => b - a)
-            .map(digits => ({
-                digits,
-                records: grouped[digits].sort((a, b) => a.time - b.time)
-            }));
-        
-        // Render grouped records
-        let html = '';
-        digitGroups.forEach(group => {
-            html += `<div class="speed-group-header">${group.digits} digits</div>`;
-            group.records.forEach((record, index) => {
-                const rank = index + 1;
-                const rankClass = rank % 2 === 1 ? 'odd' : 'even';
-                const isYou = record.name === this.playerName;
-                
-                html += `
-                    <div class="leaderboard-entry ${isYou ? 'highlight' : ''}">
-                        <span class="entry-rank ${rankClass}">${rank}</span>
-                        <div class="entry-info">
-                            <span class="entry-name">${this.escapeHtml(record.name)}${isYou ? ' (You)' : ''}</span>
-                            <span class="entry-date">${this.formatDate(record.date)}</span>
-                        </div>
-                        <div class="entry-time">${Number(record.time).toFixed(2)}s</div>
-                    </div>
-                `;
-            });
-        });
-        
-        this.elements.trainingSpeedList.innerHTML = html;
-    }
-    
-    renderTrainingEnduranceLeaderboard() {
-        if (this.trainingEnduranceLeaderboard.length === 0) {
-            this.elements.trainingEnduranceList.innerHTML = `
-                <div class="empty-leaderboard">
-                    <p>No records yet!</p>
-                    <p>Start training to claim the top spot.</p>
-                </div>
-            `;
-            return;
-        }
-        
-        this.elements.trainingEnduranceList.innerHTML = this.trainingEnduranceLeaderboard.map((record, index) => {
             const rank = index + 1;
             const rankClass = rank % 2 === 1 ? 'odd' : 'even';
             const isYou = record.name === this.playerName;

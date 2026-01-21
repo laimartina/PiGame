@@ -695,14 +695,10 @@ class DevMode {
         // Clear localStorage leaderboards
         localStorage.removeItem('piGame_enduranceLeaderboard');
         localStorage.removeItem('piGame_speedLeaderboard');
-        localStorage.removeItem('piGame_trainingSpeedLeaderboard');
-        localStorage.removeItem('piGame_trainingEnduranceLeaderboard');
         
         // Clear game's in-memory leaderboards
         this.game.enduranceLeaderboard = [];
         this.game.speedLeaderboard = { all: [] };
-        this.game.trainingSpeedLeaderboard = { all: [] };
-        this.game.trainingEnduranceLeaderboard = [];
         
         console.log('✓ Cleared localStorage leaderboards');
         
