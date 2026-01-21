@@ -278,8 +278,8 @@ body {
 
 .game-container {
     flex: 1;
-    height: calc(100vh - var(--header-height) - 132px); /* Account for header (60px) + footer space (100px) + ad (32px) */
-    min-height: calc(100vh - var(--header-height) - 132px);
+    height: calc(100vh - var(--header-height) - 100px); /* Reduced from 132px to 100px to extend usable area */
+    min-height: calc(100vh - var(--header-height) - 100px);
     position: relative;
     overflow: hidden; /* Prevent scrollbar */
 }
@@ -292,7 +292,7 @@ body {
     bottom: 0;
     display: flex;
     flex-direction: column;
-    padding: 30px 20px;
+    padding: 20px 20px 10px; /* Reduced top/bottom padding to extend usable area */
     opacity: 0;
     visibility: hidden;
     transform: translateY(20px);
@@ -448,8 +448,7 @@ body {
    ======================================== */
 
 #gameScreen {
-    padding: 20px;
-    padding-bottom: 40px; /* Extra padding for reveal mode buttons */
+    padding: 15px 20px 5px; /* Reduced padding to extend usable area */
 }
 
 .home-btn {
@@ -2008,10 +2007,10 @@ body {
         padding: 12px;
     }
     
-    /* Ensure content fits without scrollbar - numpad extends into available space */
+    /* Extend usable area on mobile - maximize space for content */
     #gameScreen {
         overflow-y: hidden; /* No scrollbar needed - content fits */
-        padding-bottom: 10px; /* Minimal padding to allow numpad to extend into available space */
+        padding: 8px 15px 0; /* Minimal padding to maximize usable area */
     }
 }
 
