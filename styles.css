@@ -1794,33 +1794,6 @@ body {
     75% { transform: translateX(5px); }
 }
 
-.reveal-input-area {
-    margin-bottom: 20px;
-}
-
-.reveal-prompt {
-    font-size: 14px;
-    color: var(--twilight);
-    margin-bottom: 10px;
-    display: block;
-}
-
-.reveal-current-cell {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-display);
-    font-size: 32px;
-    font-weight: 900;
-    background: var(--nebula);
-    border: 3px solid var(--comet);
-    border-radius: 12px;
-    color: var(--comet);
-    box-shadow: 0 0 30px rgba(254, 228, 64, 0.3);
-}
 
 /* ========================================
    TRAINING LAYOUT
@@ -2002,10 +1975,6 @@ body {
         padding: 10px;
     }
     
-    .layout-reveal .reveal-input-area {
-        margin-bottom: 10px;
-    }
-    
     .layout-reveal .game-controls {
         margin: 15px auto 15px;
     }
@@ -2040,10 +2009,6 @@ body {
     .layout-reveal .reveal-grid {
         margin-bottom: 10px;
         padding: 8px;
-    }
-    
-    .layout-reveal .reveal-input-area {
-        margin-bottom: 8px;
     }
     
     .layout-reveal .game-controls {

@@ -181,8 +181,6 @@ class PiGame {
             layoutReveal: document.getElementById('layoutReveal'),
             layoutTraining: document.getElementById('layoutTraining'),
             revealGrid: document.getElementById('revealGrid'),
-            revealDigitNum: document.getElementById('revealDigitNum'),
-            revealCurrentCell: document.getElementById('revealCurrentCell'),
             trainingGrid: document.getElementById('trainingGrid'),
             
             // Game over
@@ -485,10 +483,6 @@ class PiGame {
             }
         });
         
-        // Update digit number display
-        if (this.elements.revealDigitNum) {
-            this.elements.revealDigitNum.textContent = index + 1;
-        }
     }
     
     initTrainingGrid() {
@@ -826,9 +820,6 @@ class PiGame {
                 this.elements.trainingGrid.innerHTML = '';
             }
         }
-        if (this.elements.revealCurrentCell) {
-            this.elements.revealCurrentCell.textContent = '?';
-        }
         
         // Start timer
         this.startTime = Date.now();
@@ -887,9 +878,6 @@ class PiGame {
         switch (this.currentLayout) {
             case 'reveal':
                 this.updateRevealGrid(prevIndex, digit, true);
-                if (this.elements.revealCurrentCell) {
-                    this.elements.revealCurrentCell.textContent = '?';
-                }
                 break;
                 
             case 'training':
@@ -932,14 +920,6 @@ class PiGame {
         switch (this.currentLayout) {
             case 'reveal':
                 this.updateRevealGrid(this.currentDigitIndex, digit, false);
-                if (this.elements.revealCurrentCell) {
-                    this.elements.revealCurrentCell.textContent = expected;
-                    this.elements.revealCurrentCell.style.color = 'var(--error)';
-                    setTimeout(() => {
-                        this.elements.revealCurrentCell.textContent = '?';
-                        this.elements.revealCurrentCell.style.color = '';
-                    }, 1000);
-                }
                 break;
                 
             case 'training':
