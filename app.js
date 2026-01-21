@@ -809,6 +809,8 @@ class PiGame {
             clearInterval(this.timerInterval);
         }
         this.timerInterval = null;
+        // Reset timer display to 0.00s
+        this.elements.timer.textContent = '0.00s';
         
         // Show game screen
         this.showScreen('game');
