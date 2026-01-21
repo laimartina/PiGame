@@ -1981,11 +1981,9 @@ body {
     
     .layout-reveal .mobile-numpad {
         margin-top: 10px;
+        margin-bottom: 0;
         padding: 15px;
-    }
-    
-    #gameScreen {
-        padding-bottom: 60px; /* Extra space for numpad on mobile */
+        flex-shrink: 0;
     }
     
     .tab {
@@ -1994,9 +1992,11 @@ body {
     }
     
     /* Allow scrolling on mobile game screen if content is too tall */
+    /* Reduce padding-bottom to allow numpad to extend into available space */
     #gameScreen {
         overflow-y: auto;
         -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        padding-bottom: 10px; /* Minimal padding to allow numpad to extend into available space */
     }
 }
 
@@ -2017,11 +2017,13 @@ body {
     
     .layout-reveal .mobile-numpad {
         margin-top: 8px;
+        margin-bottom: 0;
         padding: 12px;
+        flex-shrink: 0;
     }
     
     #gameScreen {
-        padding-bottom: 80px; /* Even more space for numpad on very small screens */
+        padding-bottom: 10px; /* Minimal padding to allow numpad to extend */
     }
 }
 
