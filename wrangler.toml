@@ -1,5 +1,15 @@
 # Cloudflare Pages configuration
-# Note: For Pages deployment, use: wrangler pages deploy . --project-name=pi-game
-# This file is optional for Pages deployments
+# 
+# IMPORTANT: For Pages deployment via CLI, use:
+#   wrangler pages deploy dist --project-name=pi-game
+#
+# DO NOT use: wrangler deploy (that's for Workers, not Pages)
+#
+# This file is optional for Pages deployments via CLI.
+# For dashboard deployments (Method 1), you don't need this file at all.
+# For dashboard deployments, DO NOT set a deploy command - Cloudflare
+# automatically deploys the build output directory.
+#
 name = "pi-game"
 compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
