@@ -1982,8 +1982,25 @@ body {
     .layout-reveal .mobile-numpad {
         margin-top: 10px;
         margin-bottom: 0;
-        padding: 15px;
+        padding: 20px;
         flex-shrink: 0;
+        min-height: auto;
+    }
+    
+    /* Make numpad buttons taller in reveal mode to extend into available space */
+    .layout-reveal .mobile-numpad .numpad-btn {
+        height: 70px;
+        min-height: 70px;
+    }
+    
+    /* Increase gap between numpad rows in reveal mode */
+    .layout-reveal .mobile-numpad .numpad-row {
+        gap: 15px;
+        margin-bottom: 8px;
+    }
+    
+    .layout-reveal .mobile-numpad {
+        gap: 15px;
     }
     
     .tab {
@@ -1991,11 +2008,9 @@ body {
         padding: 12px;
     }
     
-    /* Allow scrolling on mobile game screen if content is too tall */
-    /* Reduce padding-bottom to allow numpad to extend into available space */
+    /* Ensure content fits without scrollbar - numpad extends into available space */
     #gameScreen {
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        overflow-y: hidden; /* No scrollbar needed - content fits */
         padding-bottom: 10px; /* Minimal padding to allow numpad to extend into available space */
     }
 }
@@ -2018,8 +2033,25 @@ body {
     .layout-reveal .mobile-numpad {
         margin-top: 8px;
         margin-bottom: 0;
-        padding: 12px;
+        padding: 18px;
         flex-shrink: 0;
+        min-height: auto;
+    }
+    
+    /* Make numpad buttons taller on very small screens in reveal mode */
+    .layout-reveal .mobile-numpad .numpad-btn {
+        height: 65px;
+        min-height: 65px;
+    }
+    
+    /* Increase gap between numpad rows */
+    .layout-reveal .mobile-numpad .numpad-row {
+        gap: 12px;
+        margin-bottom: 6px;
+    }
+    
+    .layout-reveal .mobile-numpad {
+        gap: 12px;
     }
     
     #gameScreen {
