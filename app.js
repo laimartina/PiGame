@@ -226,6 +226,14 @@ class PiGame {
                 this.handleDigitInput(e.key);
             } else if (e.key === 'Escape') {
                 this.quitGame();
+            } else if (e.key === 'Enter') {
+                // Don't trigger if user is typing in an input field
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                    return;
+                }
+                e.preventDefault();
+                this.saveAndQuit();
             }
         });
         
@@ -795,9 +803,12 @@ class PiGame {
             }
         }
         
-        // Start timer
-        this.startTime = Date.now();
-        this.timerInterval = setInterval(() => this.updateTimer(), 100);
+        // Timer will start when first digit is entered (for accurate speed records)
+        this.startTime = null;
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+        }
+        this.timerInterval = null;
         
         // Show game screen
         this.showScreen('game');
@@ -815,6 +826,12 @@ class PiGame {
     
     handleDigitInput(digit) {
         if (!this.isPlaying) return;
+        
+        // Start timer on first digit input (for accurate speed records)
+        if (this.startTime === null && this.currentDigitIndex === 0) {
+            this.startTime = Date.now();
+            this.timerInterval = setInterval(() => this.updateTimer(), 100);
+        }
         
         // Anti-cheat validation
         if (!this.validateInput()) {
@@ -940,16 +957,18 @@ class PiGame {
     }
     
     updateTimer() {
-        if (!this.isPlaying) return;
+        if (!this.isPlaying || this.startTime === null) return;
         const elapsed = (Date.now() - this.startTime) / 1000;
         this.elements.timer.textContent = elapsed.toFixed(2) + 's';
     }
     
     endGame(voluntary = false) {
         this.isPlaying = false;
-        clearInterval(this.timerInterval);
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+        }
         
-        const finalTime = (Date.now() - this.startTime) / 1000;
+        const finalTime = this.startTime ? (Date.now() - this.startTime) / 1000 : 0;
         const finalDigits = this.currentDigitIndex;
         
         // Update session highest for current mode
