@@ -1,7 +1,7 @@
 {
   "name": "π∞ - The Infinite Pi Challenge",
   "short_name": "Pi Challenge",
-  "description": "How many digits of Pi can you memorize? Challenge yourself and compete globally!",
+  "description": "How many digits of Pi can you memorize? Challenge yourself and track your personal bests!",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050510",

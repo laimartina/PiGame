@@ -32,7 +32,6 @@ You need to host your game online so AdSense can approve it and show ads. Here a
    - `app.js`
    - `styles.css`
    - `ads.js`
-   - `supabase.js`
    - `manifest.json`
    - All other game files
    - **Don't upload**: `node_modules`, `.git` folder, or `start.sh`/`start.bat`

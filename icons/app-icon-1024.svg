@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Background with cosmic gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a1a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0a1a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="piGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00f5d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00bbf9;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="glowStrong">
+      <feGaussianBlur stdDeviation="12" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="180" fill="url(#bgGradient)"/>
+  
+  <!-- Subtle stars in background -->
+  <circle cx="150" cy="150" r="2" fill="#ffffff" opacity="0.2"/>
+  <circle cx="874" cy="200" r="1.5" fill="#00f5d4" opacity="0.3"/>
+  <circle cx="200" cy="850" r="1.5" fill="#9b5de5" opacity="0.2"/>
+  <circle cx="850" cy="800" r="2" fill="#ffffff" opacity="0.2"/>
+  
+  <!-- Pi symbol (?) - large, prominent, matching game logo style, centered vertically -->
+  <text x="512" y="520" 
+        font-family="Orbitron, Arial, sans-serif" 
+        font-size="380" 
+        font-weight="900" 
+        fill="url(#piGradient)" 
+        text-anchor="middle"
+        dominant-baseline="middle"
+        filter="url(#glowStrong)">?</text>
+  
+  <!-- Infinity symbol (?) - smaller, positioned to the right of Pi, matching game logo -->
+  <text x="680" y="460" 
+        font-family="Orbitron, Arial, sans-serif" 
+        font-size="240" 
+        font-weight="900" 
+        fill="#9b5de5" 
+        text-anchor="middle"
+        dominant-baseline="middle"
+        filter="url(#glow)">?</text>
+  
+  <!-- Subtle border glow -->
+  <rect width="1024" height="1024" rx="180" fill="none" stroke="url(#piGradient)" stroke-width="3" opacity="0.2"/>
+</svg>

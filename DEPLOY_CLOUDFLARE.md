@@ -104,9 +104,7 @@ If you want to deploy directly from root without building:
 
 ### Step 4: Environment Variables (if needed)
 
-If your app uses environment variables (e.g., Supabase keys), add them in the **Environment variables** section:
-- Variable name: `VITE_SUPABASE_URL` (or your variable name)
-- Value: Your actual value
+This app needs no environment variables; leave the **Environment variables** section empty.
 
 ### Step 5: Deploy
 
@@ -224,7 +222,6 @@ The following files have been created to help with deployment:
 - [ ] Test all game modes (Classic, Reveal, Training)
 - [ ] Verify service worker works (PWA functionality)
 - [ ] Test on mobile devices
-- [ ] Check that Supabase integration works (if using global leaderboards)
 - [ ] Verify custom domain (if configured)
 
 ## Troubleshooting

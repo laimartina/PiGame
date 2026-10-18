@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create App Icon PNG</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0a0a1a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00f5d4;
+        }
+        canvas {
+            border: 2px solid #00f5d4;
+            margin: 20px 0;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #00f5d4, #00bbf9);
+            color: #0a0a1a;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .info {
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Create App Icon PNG</h1>
+        <div class="info">
+            <p>This will create a 1024x1024 PNG icon with π and ∞ symbols, matching your game's logo style.</p>
+        </div>
+        <canvas id="canvas" width="1024" height="1024"></canvas>
+        <div>
+            <button onclick="downloadPNG()">Download PNG Icon</button>
+            <button onclick="previewIcon()">Preview Icon</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function drawIcon() {
+            // Clear canvas
+            ctx.clearRect(0, 0, 1024, 1024);
+
+            // Background gradient
+            const bgGradient = ctx.createLinearGradient(0, 0, 1024, 1024);
+            bgGradient.addColorStop(0, '#0a0a1a');
+            bgGradient.addColorStop(0.5, '#1a1a2e');
+            bgGradient.addColorStop(1, '#0a0a1a');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, 1024, 1024);
+
+            // Rounded corners effect (simulated)
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, 1024, 1024, 180);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Subtle stars
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.beginPath();
+            ctx.arc(150, 150, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(874, 200, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(155, 93, 229, 0.2)';
+            ctx.beginPath();
+            ctx.arc(200, 850, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.beginPath();
+            ctx.arc(850, 800, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pi symbol (π) - large, prominent, centered vertically
+            ctx.font = '900 380px Orbitron, Arial, sans-serif';
+            const piGradient = ctx.createLinearGradient(300, 200, 724, 520);
+            piGradient.addColorStop(0, '#00f5d4');
+            piGradient.addColorStop(1, '#00bbf9');
+            ctx.fillStyle = piGradient;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Add glow effect for Pi
+            ctx.shadowColor = 'rgba(0, 245, 212, 0.6)';
+            ctx.shadowBlur = 30;
+            ctx.fillText('π', 512, 520);
+            ctx.shadowBlur = 0;
+
+            // Infinity symbol (∞) - smaller, to the right, centered vertically
+            ctx.font = '900 240px Orbitron, Arial, sans-serif';
+            ctx.fillStyle = '#9b5de5';
+            ctx.shadowColor = 'rgba(155, 93, 229, 0.5)';
+            ctx.shadowBlur = 20;
+            ctx.fillText('∞', 680, 460);
+            ctx.shadowBlur = 0;
+
+            // Border glow
+            ctx.strokeStyle = 'rgba(0, 245, 212, 0.2)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(1.5, 1.5, 1021, 1021, 180);
+            ctx.stroke();
+        }
+
+        // Helper for rounded rectangles
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+            this.beginPath();
+            this.moveTo(x + radius, y);
+            this.lineTo(x + width - radius, y);
+            this.quadraticCurveTo(x + width, y, x + width, y + radius);
+            this.lineTo(x + width, y + height - radius);
+            this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            this.lineTo(x + radius, y + height);
+            this.quadraticCurveTo(x, y + height, x, y + height - radius);
+            this.lineTo(x, y + radius);
+            this.quadraticCurveTo(x, y, x + radius, y);
+            this.closePath();
+        };
+
+        function downloadPNG() {
+            drawIcon();
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'app-icon-1024.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                alert('✅ PNG icon downloaded! Save it as icons/app-icon-1024.png');
+            }, 'image/png');
+        }
+
+        function previewIcon() {
+            drawIcon();
+        }
+
+        // Draw on load
+        window.onload = function() {
+            drawIcon();
+        };
+    </script>
+</body>
+</html>

@@ -20,20 +20,24 @@ class AdManager {
                      publisherId: 'pub-7515048306007823', // AdSense publisher ID (as shown in your account)
                      slotId: null // Ad unit slot ID (create an ad unit in AdSense to get this)
                  },
-                 android: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX',
-                 ios: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX'
+                 // Google's public TEST ad units. Replace with your real AdMob units before release
+                 // and set adMobTesting = false.
+                 android: 'ca-app-pub-3940256099942544/6300978111',
+                 ios: 'ca-app-pub-3940256099942544/2934735716'
               },
             rewarded: {
-                android: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX',
-                ios: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX'
+                android: 'ca-app-pub-3940256099942544/5224354917',
+                ios: 'ca-app-pub-3940256099942544/1712485313'
             }
         };
         
         // Check if we're in a Capacitor app
         this.isCapacitor = typeof Capacitor !== 'undefined';
+        this.isNative = this.isCapacitor && Capacitor.isNativePlatform();
+        this.adMobTesting = true; // set to false for the release build
         
         // Initialize based on platform
-        if (this.isCapacitor && this.isMobile) {
+        if (this.isNative) {
             this.initAdMob();
         } else {
             this.initAdSense();
@@ -47,113 +51,123 @@ class AdManager {
     // ========================================
     // AdMob (Mobile - Capacitor)
     // ========================================
-    
+    // The plugin is reached through Capacitor.Plugins (no bundler, so no ES import).
+
+    get adMob() {
+        return window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
+    }
+
+    get platform() {
+        return window.Capacitor.getPlatform() === 'ios' ? 'ios' : 'android';
+    }
+
     async initAdMob() {
-        if (!this.isCapacitor) return;
-        
+        const AdMob = this.adMob;
+        if (!AdMob) {
+            console.warn('AdMob plugin not available, using placeholder');
+            this.initPlaceholder();
+            return;
+        }
+
         try {
-            const { AdMob } = await import('@capacitor-community/admob');
-            
-            // Initialize AdMob
             await AdMob.initialize({
-                requestTrackingAuthorization: true,
-                testingDevices: ['YOUR_TEST_DEVICE_ID'], // Add your test device ID
-                initializeForTesting: false // Set to true for testing
+                initializeForTesting: this.adMobTesting
             });
-            
+            // iOS 14+ ATT prompt (no-op elsewhere); ads still load if the user declines
+            try { await AdMob.requestTrackingAuthorization(); } catch (e) { /* ignore */ }
+
             this.adMobInitialized = true;
             console.log('✓ AdMob initialized');
+            this.showBannerAd();
+            this.loadRewardedAd();
         } catch (error) {
-            console.warn('AdMob not available, using placeholder:', error);
+            console.warn('AdMob init failed, using placeholder:', error);
             this.initPlaceholder();
         }
     }
-    
+
     async showBannerAd() {
-        if (this.isCapacitor && this.adMobInitialized) {
+        if (this.isNative && this.adMobInitialized) {
             try {
-                const { AdMob } = await import('@capacitor-community/admob');
-                const platform = this.isMobile && /iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'ios' : 'android';
-                
-                await AdMob.showBanner({
-                    adId: this.adUnitIds.banner[platform],
-                    adSize: 'BANNER',
+                await this.adMob.showBanner({
+                    adId: this.adUnitIds.banner[this.platform],
+                    adSize: 'ADAPTIVE_BANNER',
                     position: 'BOTTOM_CENTER',
-                    margin: 0
+                    margin: 0,
+                    isTesting: this.adMobTesting
                 });
-                
                 console.log('✓ Banner ad shown');
             } catch (error) {
                 console.error('Failed to show banner ad:', error);
-                this.showPlaceholderBanner();
             }
         } else {
             this.showPlaceholderBanner();
         }
     }
-    
+
     async hideBannerAd() {
-        if (this.isCapacitor && this.adMobInitialized) {
+        if (this.isNative && this.adMobInitialized) {
             try {
-                const { AdMob } = await import('@capacitor-community/admob');
-                await AdMob.hideBanner();
+                await this.adMob.hideBanner();
             } catch (error) {
                 console.error('Failed to hide banner ad:', error);
             }
         }
     }
-    
+
     async loadRewardedAd() {
-        if (this.isCapacitor && this.adMobInitialized) {
+        if (this.isNative && this.adMobInitialized) {
             try {
-                const { AdMob } = await import('@capacitor-community/admob');
-                const platform = this.isMobile && /iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'ios' : 'android';
-                
-                this.rewardedAd = await AdMob.prepareRewardVideoAd({
-                    adId: this.adUnitIds.rewarded[platform]
+                await this.adMob.prepareRewardVideoAd({
+                    adId: this.adUnitIds.rewarded[this.platform],
+                    isTesting: this.adMobTesting
                 });
-                
+                this.rewardedAd = true;
                 console.log('✓ Rewarded ad loaded');
                 return true;
             } catch (error) {
                 console.error('Failed to load rewarded ad:', error);
+                this.rewardedAd = null;
                 return false;
             }
         }
         return false;
     }
-    
+
     async showRewardedAd() {
-        return new Promise(async (resolve, reject) => {
-            if (this.isCapacitor && this.adMobInitialized && this.rewardedAd) {
-                try {
-                    const { AdMob } = await import('@capacitor-community/admob');
-                    
-                    // Set up listeners
-                    const rewardListener = await AdMob.addListener('onRewardedVideoAdRewarded', () => {
-                        console.log('✓ Rewarded ad completed');
-                        rewardListener.remove();
-                        closeListener.remove();
-                        resolve({ success: true, reward: { lives: 5 } });
-                    });
-                    
-                    const closeListener = await AdMob.addListener('onRewardedVideoAdClosed', () => {
-                        rewardListener.remove();
-                        closeListener.remove();
-                        resolve({ success: false, reason: 'closed' });
-                    });
-                    
-                    await AdMob.showRewardVideoAd();
-                } catch (error) {
-                    reject(error);
-                }
-            } else {
-                // Fallback to placeholder
-                this.showPlaceholderRewardedAd(resolve);
+        if (!(this.isNative && this.adMobInitialized && this.rewardedAd)) {
+            // Web / not ready: placeholder flow
+            if (this.isNative) return { success: false, reason: 'not_ready' };
+            return new Promise(resolve => this.showPlaceholderRewardedAd(resolve));
+        }
+
+        const AdMob = this.adMob;
+        return new Promise(async (resolve) => {
+            let rewarded = false;
+            const handles = [];
+            const finish = (result) => {
+                handles.forEach(h => h.remove());
+                this.rewardedAd = null;
+                this.loadRewardedAd(); // preload the next one
+                resolve(result);
+            };
+
+            handles.push(await AdMob.addListener('onRewardedVideoAdReward', () => { rewarded = true; }));
+            handles.push(await AdMob.addListener('onRewardedVideoAdDismissed', () => {
+                finish(rewarded ? { success: true, reward: { lives: 5 } } : { success: false, reason: 'closed' });
+            }));
+            handles.push(await AdMob.addListener('onRewardedVideoAdFailedToShow', () => {
+                finish({ success: false, reason: 'failed' });
+            }));
+
+            try {
+                await AdMob.showRewardVideoAd();
+            } catch (error) {
+                finish({ success: false, reason: 'failed' });
             }
         });
     }
-    
+
     // ========================================
     // AdSense (Web)
     // ========================================

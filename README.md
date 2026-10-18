@@ -5,7 +5,7 @@ A memory game where you challenge yourself to memorize digits of Pi!
 ## Features
 
 - 🎮 Multiple game modes (Classic, Reveal, Training)
-- 🏆 Global Leaderboards (Speed & Endurance) - compete with players worldwide!
+- 🏆 Personal records (Speed & Endurance), stored on your device
 - ❤️ Lives system with regeneration
 - 📊 Statistics tracking
 - 🌌 Beautiful cosmic-themed UI
@@ -40,7 +40,6 @@ PiGame/
 ├── sw.js              # Service worker
 ├── pi-digits.js       # Pi digits data (100k)
 ├── pi-digits-manager.js # Pi digits manager
-├── supabase.js        # Backend integration
 ├── package.json       # Node.js dependencies
 ├── capacitor.config.json # Capacitor config
 ├── android/           # Android project (after setup)
@@ -50,7 +49,6 @@ PiGame/
 
 ## Documentation
 
-- **SETUP_GLOBAL_LEADERBOARDS.md** - Set up global leaderboards with Supabase
 - **SETUP_INSTRUCTIONS.md** - How to set up mobile apps
 - **QUICK_START.md** - Quick reference guide
 - **BUILD_GUIDE.md** - Complete build instructions
@@ -76,7 +74,7 @@ Then rebuild in Android Studio or Xcode.
 - **Frontend**: Vanilla JavaScript, HTML5, CSS3
 - **Mobile**: Capacitor
 - **PWA**: Service Worker, Web App Manifest
-- **Storage**: LocalStorage, Supabase (for global leaderboards)
+- **Storage**: LocalStorage
 
 ## License
 

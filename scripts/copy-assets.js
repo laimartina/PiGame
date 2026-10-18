@@ -16,8 +16,9 @@ const filesToCopy = [
   'sw.js',
   'pi-digits.js',
   'pi-digits-manager.js',
-  'supabase.js',
-  'dev-mode.js'
+  'ads.js',
+  'privacy.html',
+  'support.html'
 ].filter(file => {
   // Only include files that exist
   const src = path.join(__dirname, '..', file);
@@ -36,6 +37,15 @@ filesToCopy.forEach(file => {
     console.warn(`⚠ File not found: ${file}`);
   }
 });
+
+// Release build: dev-mode.js is never shipped, and its script tag is stripped
+const distIndex = path.join(distDir, 'index.html');
+let html = fs.readFileSync(distIndex, 'utf8');
+html = html.replace(/\s*<!-- Dev\/Testing mode[^>]*-->\s*<script src="dev-mode\.js"><\/script>/, '');
+fs.writeFileSync(distIndex, html);
+const staleDev = path.join(distDir, 'dev-mode.js');
+if (fs.existsSync(staleDev)) fs.unlinkSync(staleDev);
+console.log('✓ Stripped dev-mode from dist/');
 
 // Copy icons directory if it exists
 const iconsSrc = path.join(__dirname, '..', 'icons');

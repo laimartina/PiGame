@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pi-game-v1';
+const CACHE_NAME = 'pi-game-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -8,8 +8,7 @@ const ASSETS = [
   '/sw.js',
   '/pi-digits.js',
   '/pi-digits-manager.js',
-  '/supabase.js',
-  '/dev-mode.js'
+  '/ads.js'
 ];
 
 // Install - cache assets

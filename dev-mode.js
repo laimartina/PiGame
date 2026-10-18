@@ -548,83 +548,7 @@ class DevMode {
             'BrainiacPi', 'DigitalDreamer', 'PiPioneer', 'MathGenius'
         ];
         
-        // Check if Supabase is configured
-        const useSupabase = this.game.supabase && this.game.supabase.isConfigured;
-        
-        if (useSupabase) {
-            // Add fake scores to Supabase
-            try {
-                console.log('Adding fake scores to Supabase...');
-                let added = 0;
-                
-                // Add endurance records (multiple records per user are allowed)
-                for (let i = 0; i < 10; i++) {
-                    const digits = Math.floor(Math.random() * 5000) + 100;
-                    const timeMs = Math.floor(Math.random() * 300000) + 10000;
-                    // Use unique names with timestamp to avoid conflicts
-                    const name = names[i % names.length] + '_' + Date.now() + '_' + i;
-                    
-                    try {
-                        await this.game.supabase.fetch('/rest/v1/endurance_records', {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                user_id: null,
-                                username: name.substring(0, 20),
-                                guest_name: name.substring(0, 20),
-                                max_digits: digits,
-                                time_ms: timeMs
-                            }),
-                            headers: { 'Prefer': 'return=minimal' }
-                        });
-                        added++;
-                    } catch (e) {
-                        // Log non-conflict errors
-                        if (e.message && !e.message.includes('Conflict')) {
-                            console.warn('Failed to add fake endurance record:', e.message);
-                        }
-                    }
-                }
-                
-                // Add speed records
-                const milestones = [10, 20, 50, 100, 200, 500];
-                for (const milestone of milestones) {
-                    for (let i = 0; i < 5; i++) {
-                        // Use unique names to avoid conflicts
-                        const name = names[i % names.length] + '_' + milestone + '_' + i;
-                        const timeMs = Math.floor((milestone * 100) + Math.random() * milestone * 50);
-                        
-                        try {
-                            await this.game.supabase.fetch('/rest/v1/speed_records', {
-                                method: 'POST',
-                                body: JSON.stringify({
-                                    user_id: null,
-                                    username: name.substring(0, 20),
-                                    guest_name: name.substring(0, 20),
-                                    digit_milestone: milestone,
-                                    time_ms: timeMs
-                                }),
-                                headers: { 'Prefer': 'return=minimal' }
-                            });
-                            added++;
-                        } catch (e) {
-                            // Ignore duplicates/conflicts - record might already exist
-                            if (e.message && !e.message.includes('duplicate') && !e.message.includes('Conflict')) {
-                                console.warn('Failed to add fake speed record:', e.message);
-                            }
-                        }
-                    }
-                }
-                
-                // Reload leaderboards from Supabase
-                await this.game.loadAllLeaderboards();
-                
-                alert(`✓ Added ${added} fake scores to Supabase!\nGo to Leaderboard to see them.`);
-            } catch (error) {
-                console.error('Failed to add fake scores to Supabase:', error);
-                alert('Failed to add fake scores to Supabase. Check console for details.');
-            }
-        } else {
-            // Add to localStorage (offline mode)
+        {
         const endurance = [];
         for (let i = 0; i < 20; i++) {
             endurance.push({
@@ -688,133 +612,18 @@ class DevMode {
     }
     
     clearLeaderboards() {
-        if (!confirm('Clear all leaderboard data?\n\nThis will clear:\n- localStorage leaderboards\n- Supabase data (if configured)\n\nContinue?')) {
+        if (!confirm('Clear all saved records?\n\nContinue?')) {
             return;
         }
         
-        // Clear localStorage leaderboards
         localStorage.removeItem('piGame_enduranceLeaderboard');
         localStorage.removeItem('piGame_speedLeaderboard');
         
-        // Clear game's in-memory leaderboards
         this.game.enduranceLeaderboard = [];
         this.game.speedLeaderboard = { all: [] };
         
-        console.log('✓ Cleared localStorage leaderboards');
-        
-        // Clear Supabase data if configured
-        if (this.game.supabase && this.game.supabase.isConfigured) {
-            if (confirm('Clear Supabase database leaderboards?\n\n⚠️ This will delete ALL records for ALL users globally!\n\nContinue?')) {
-                this.clearSupabaseLeaderboards();
-            } else {
-                alert('✓ Cleared localStorage leaderboards.\n\nSupabase data was NOT cleared.\n\nTo clear Supabase, run SQL commands in Supabase SQL Editor:\n\nDELETE FROM public.endurance_records;\nDELETE FROM public.speed_records;');
-                if (this.game.screens.leaderboard.classList.contains('active')) {
-                    this.game.renderSpeedLeaderboard();
-                    this.game.renderEnduranceLeaderboard();
-                }
-                location.reload();
-            }
-        } else {
-            alert('✓ Cleared localStorage leaderboards!\n\nReloading page...');
-            if (this.game.screens.leaderboard.classList.contains('active')) {
-                this.game.renderSpeedLeaderboard();
-                this.game.renderEnduranceLeaderboard();
-            }
-            location.reload();
-        }
-    }
-    
-    async clearSupabaseLeaderboards() {
-        try {
-            const beforeEndurance = await this.game.supabase.fetch('/rest/v1/endurance_records?select=id&limit=1', { method: 'GET' });
-            const beforeSpeed = await this.game.supabase.fetch('/rest/v1/speed_records?select=id&limit=1', { method: 'GET' });
-            
-            // Clear endurance records - Supabase requires a WHERE clause, so we use a filter that matches all records
-            // Using id=not.is.null matches all records (since id is always not null for existing records)
-            // Use return=representation to get deleted rows back, or count via Content-Range header
-            const enduranceResponseRaw = await fetch(`${this.game.supabase.url}/rest/v1/endurance_records?id=not.is.null`, {
-                method: 'DELETE',
-                headers: { 
-                    'apikey': this.game.supabase.key,
-                    'Prefer': 'return=representation',
-                    'Content-Type': 'application/json'
-                }
-            });
-            const enduranceText = await enduranceResponseRaw.text();
-            const enduranceResponse = enduranceText ? JSON.parse(enduranceText) : [];
-            
-            // Clear speed records - Supabase requires a WHERE clause, so we use a filter that matches all records
-            const speedResponseRaw = await fetch(`${this.game.supabase.url}/rest/v1/speed_records?id=not.is.null`, {
-                method: 'DELETE',
-                headers: { 
-                    'apikey': this.game.supabase.key,
-                    'Prefer': 'return=representation',
-                    'Content-Type': 'application/json'
-                }
-            });
-            const speedText = await speedResponseRaw.text();
-            const speedResponse = speedText ? JSON.parse(speedText) : [];
-            
-            // Check counts after deletion
-            const afterEndurance = await this.game.supabase.fetch('/rest/v1/endurance_records?select=id&limit=1', { method: 'GET' });
-            const afterSpeed = await this.game.supabase.fetch('/rest/v1/speed_records?select=id&limit=1', { method: 'GET' });
-            
-            const enduranceCount = Array.isArray(enduranceResponse) ? enduranceResponse.length : 0;
-            const speedCount = Array.isArray(speedResponse) ? speedResponse.length : 0;
-            
-            if (enduranceCount === 0 && speedCount === 0) {
-                console.warn('⚠️ DELETE returned 0 rows - records may not have been deleted');
-                alert('⚠️ WARNING: DELETE operation returned 0 rows deleted!\n\nThis means Row Level Security (RLS) policies are blocking deletion.\n\nTo fix this:\n1. Go to Supabase SQL Editor\n2. Run the migration file: database/allow_delete_policies.sql\n\nOr manually run:\n\nDROP POLICY IF EXISTS "Anyone can delete speed records" ON public.speed_records;\nCREATE POLICY "Anyone can delete speed records" \n    ON public.speed_records FOR DELETE \n    USING (true);\n\nDROP POLICY IF EXISTS "Anyone can delete endurance records" ON public.endurance_records;\nCREATE POLICY "Anyone can delete endurance records" \n    ON public.endurance_records FOR DELETE \n    USING (true);\n\nlocalStorage was cleared successfully.');
-            } else {
-                console.log(`✓ Cleared ${enduranceCount} endurance_records and ${speedCount} speed_records from Supabase`);
-                alert(`✓ Cleared ALL leaderboard data!\n\n- localStorage cleared\n- Supabase: ${enduranceCount} endurance + ${speedCount} speed records deleted\n\nReloading page...`);
-            }
-            
-            // Reload leaderboards
-            await this.game.loadAllLeaderboards();
-            
-            if (this.game.screens.leaderboard.classList.contains('active')) {
-                this.game.renderSpeedLeaderboard();
-                this.game.renderEnduranceLeaderboard();
-            }
-            
-            location.reload();
-        } catch (error) {
-            console.error('Failed to clear Supabase leaderboards:', error);
-            
-            // Check if it's an RLS/permissions error
-            const isRLSError = error.status === 403 || 
-                              error.message?.toLowerCase().includes('permission') ||
-                              error.message?.toLowerCase().includes('policy') ||
-                              error.message?.toLowerCase().includes('row level security');
-            
-            let errorMsg = '❌ Failed to clear Supabase data.\n\n';
-            errorMsg += 'Error: ' + error.message + '\n\n';
-            
-            if (isRLSError) {
-                errorMsg += '⚠️ This is likely a Row Level Security (RLS) policy issue.\n\n';
-                errorMsg += 'To fix this, run the following SQL in Supabase SQL Editor:\n\n';
-                errorMsg += 'DELETE FROM public.endurance_records WHERE id IS NOT NULL;\n';
-                errorMsg += 'DELETE FROM public.speed_records WHERE id IS NOT NULL;\n\n';
-                errorMsg += 'Or run the migration file:\n';
-                errorMsg += 'database/allow_delete_policies.sql\n\n';
-            } else if (error.message?.includes('WHERE clause')) {
-                errorMsg += '⚠️ Supabase requires a WHERE clause on DELETE operations.\n\n';
-                errorMsg += 'The code has been updated to include WHERE clauses.\n';
-                errorMsg += 'If you still see this error, try manually in SQL Editor:\n\n';
-                errorMsg += 'DELETE FROM public.endurance_records WHERE id IS NOT NULL;\n';
-                errorMsg += 'DELETE FROM public.speed_records WHERE id IS NOT NULL;\n\n';
-            } else {
-                errorMsg += 'You may need to clear it manually via SQL Editor:\n\n';
-                errorMsg += 'DELETE FROM public.endurance_records WHERE id IS NOT NULL;\n';
-                errorMsg += 'DELETE FROM public.speed_records WHERE id IS NOT NULL;\n\n';
-            }
-            
-            errorMsg += 'localStorage was cleared successfully.';
-            
-            alert(errorMsg);
-            location.reload();
-        }
+        alert('✓ Cleared records!\n\nReloading page...');
+        location.reload();
     }
 }
 
